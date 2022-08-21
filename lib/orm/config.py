@@ -1,10 +1,14 @@
 from tortoise import Tortoise
 
+from lib.constants import DATABASE_URL
+
+__all__ = ['init_db', 'close_db']
+
 TORTOISE_ORM = {
-    "connections": {"default": "sqlite://db.sqlite3"},
+    "connections": {"default": DATABASE_URL},
     "apps": {
         "models": {
-            "models": [ "lib.orm.models", "tests.models", "aerich.models"],
+            "models": [ "lib.orm.models", "aerich.models"],
             "default_connection": "default",
         },
     },
