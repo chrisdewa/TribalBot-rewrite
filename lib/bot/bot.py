@@ -1,15 +1,19 @@
 from discord import Bot
 
-from lib.constants import TOKEN
-from lib.orm.config import init_db, close_db
+from lib.constants import BOT_TOKEN as TOKEN
+from lib.orm.config import *
+
 
 class TribalBot(Bot):
-    def __init__(self, description=None, *args, **options):
-        super().__init__(description, *args, **options)
+    def __init__(self, *args, **options):
+        super().__init__(*args, **options)
 
-    def on_ready(self):
+    async def on_ready(self):
         print(
-            'TribalBot logged in:', f'USERNAME: {self.user.name}', f'ID: {self.user.id}', '='*30, sep='\n'
+            f'TribalBot logged in:\n'
+            f'USERNAME: {self.user.name}\n'
+            f'ID: {self.user.id}\n'
+            f'{"="*30}'
         )
     
     def run(self) -> None:
