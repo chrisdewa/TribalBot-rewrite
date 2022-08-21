@@ -1,0 +1,2 @@
+DATABASE_URL=mysql://username:password@address/database_name
+BOT_TOKEN=bot_token
