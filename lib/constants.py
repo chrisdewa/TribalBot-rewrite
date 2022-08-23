@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 __all__ = [
+    'DEV_MODE',
     'BOT_TOKEN',
     'DATABASE_URL',
     'guild_ids',

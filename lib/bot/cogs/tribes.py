@@ -28,6 +28,34 @@ class TribeCog(Cog, name='TribeCog', description='Cog for tribe commands'):
         # TODO: make sure there's a guild
         tribes = await get_guild_tribes(ctx.guild)
         await ctx.respond(str(tribes), ephemeral=True)
+    
+    @slash_command(
+        guild_ids=guild_ids,
+        name='create-tribe',
+        description='Creates a new tribe with you as the leader!'
+    )
+    async def create_tribe_command(
+        self,
+        ctx: ApplicationContext,
+        name: Option(
+            str, 
+            description='The name of the tribe. Must be under 30 characters', 
+            max_length=30
+            # TODO: add category with autocomplete
+        ),
+        color: Option(
+            int,
+            description='The color of your tribe, has to be a number from 0 to 16777215',
+            min_value=0,
+            max_value=16777215,
+            optional=True,
+            default=None
+        )
+    ):
+        tribe = await Tribe.create(name=name, color=color, leader=ctx.author.id)
+        print(tribe)
+        await ctx.respond(f'Tribe created with id: {tribe.pk}')
+        
 
 def setup(bot: TribalBot):
     bot.add_cog(TribeCog(bot))

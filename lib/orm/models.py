@@ -18,11 +18,17 @@ class GuildConfig(Model):
     guild_id = fields.IntField(pk=True)
     tribes: fields.ReverseRelation['Tribe']
     categories: fields.ReverseRelation['TribeCategory']
-    leaders_role = fields.IntField(default=None)
-    urls = fields.BooleanField(default=False)
+    leaders_role = fields.IntField(null=True)
+    urls = fields.BooleanField(null=True)
     
     class Meta:
         table = "guild_configs"
+    
+    def __str__(self) -> str:
+        return f'Guild(guild_id={self.guild_id})'
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 class LogEntry(Model):
@@ -53,11 +59,15 @@ class Tribe(Model):
     category = fields.ForeignKeyField('models.TribeCategory', related_name='tribes', on_delete=fields.CASCADE, null=True)
     color = fields.IntField(default=16711680)
     log_entries: fields.ReverseRelation[LogEntry]
-
     
     class Meta:
         table = "tribes"
 
+    def __str__(self) -> str:
+        return f'Tribe(pk={self.pk}, guild_id={self.guild_config_id}, name={self.name}, leader={self.leader})'
+    
+    def __repr__(self) -> str:
+        return self.__str__()
     
     
     
