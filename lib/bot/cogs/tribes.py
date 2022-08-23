@@ -1,11 +1,13 @@
 from discord.ext.commands import Cog
 
+from discord import Guild
 from discord.commands import ApplicationContext, slash_command, Option
 
 from lib.bot import TribalBot
 from lib.constants import guild_ids
-
-
+from lib.orm.models import *
+from lib.controllers.tribes import *
+    
 class TribeCog(Cog, name='TribeCog', description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
@@ -23,7 +25,9 @@ class TribeCog(Cog, name='TribeCog', description='Cog for tribe commands'):
         self, 
         ctx: ApplicationContext,
     ):
-        await ctx.respond('works', ephemeral=True)
+        # TODO: make sure there's a guild
+        tribes = await get_guild_tribes(ctx.guild)
+        await ctx.respond(str(tribes), ephemeral=True)
 
 def setup(bot: TribalBot):
     bot.add_cog(TribeCog(bot))
