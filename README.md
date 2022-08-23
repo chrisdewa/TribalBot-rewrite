@@ -41,7 +41,7 @@ guild_id=9876543210
 member_id = 1234567890
 tribes = await Tribe.filter(members__contains=member, guild_config=guild_id)
 ```
-If the that function is ran
+If the that function is called on SQLite all tribes from the given guild_id will be returned instead of only those with the member, however this will work fine in MySQL and postgresql.
 
 
 ## Philosophy and cultural remarks
