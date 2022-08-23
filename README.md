@@ -11,9 +11,11 @@ All hands accepted
         bot/           # all the bot's components and setup logic
             cogs/      # all bot's cogs (extensions)
         orm/           # all database logic and interactions
-            models/    # each model represents a table. 
+            models.py  # each model represents a table. 
                        # each model should be a single file but imported 
                        # on the folder's __init__.py
+        controllers/   # Contains code that communicates the database with the commands
+        utils/         # contains helper code
     main.py            # does final preparations and launches the bot
 ```
 
@@ -28,6 +30,18 @@ The bot's cogs are classes but commands should be designed following a functiona
 Ideally all the output of the bot should come in the form of embeds except for short ephemeral messages
 Embed colors should be saturated greens and oranges
 The terminology of the bot and its commands should reflect a tribal style
+
+## Development notes:
+
+The environmental file must be named `.env`. While the bot and logic will be written with a final backend
+database of MySQL almost all functionality will be available for SQLite as well. The only anticipated function 
+that will not work with SQLite is filtering tribes containing a given member:
+```py
+guild_id=9876543210
+member_id = 1234567890
+tribes = await Tribe.filter(members__contains=member, guild_config=guild_id)
+```
+If the that function is ran
 
 
 ## Philosophy and cultural remarks
