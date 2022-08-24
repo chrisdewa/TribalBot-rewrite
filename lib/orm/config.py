@@ -21,4 +21,6 @@ async def init_db():
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
 
-close_db = Tortoise.close_connections # alias for convinience
+async def close_db():
+    print(['[!] closing the database'])
+    await Tortoise.close_connections() 
