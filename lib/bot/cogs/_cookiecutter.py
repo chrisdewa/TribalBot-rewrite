@@ -1,9 +1,7 @@
 from discord.ext.commands import Cog
-
-from discord.commands import ApplicationContext, slash_command, Option
+from discord import app_commands, Interaction
 
 from lib.bot import TribalBot
-from lib.constants import guild_ids
 
 
 class TestCog(Cog, name='Test', description='Test commands'):
@@ -14,17 +12,16 @@ class TestCog(Cog, name='Test', description='Test commands'):
     def cog_unload(self) -> None:
         print(f'>> {self.qualified_name} Cog unloaded')
     
-    @slash_command(
-        guild_ids=guild_ids,
+    @app_commands.command(
         name='foo',
         description='Test command'
     )
     async def foo(
         self, 
-        ctx: ApplicationContext,
+        interaction: Interaction,
     ):
-        await ctx.respond('works', ephemeral=True)
+        await interaction.response.send_message('works', ephemeral=True)
 
-def setup(bot: TribalBot):
-    bot.add_cog(TestCog(bot))
+async def setup(bot: TribalBot):
+    await bot.add_cog(TestCog(bot))
         

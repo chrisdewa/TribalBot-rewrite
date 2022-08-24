@@ -7,7 +7,7 @@ __all__ = [
     'DEV_MODE',
     'BOT_TOKEN',
     'DATABASE_URL',
-    'guild_ids',
+    'guild_id',
     'DEFAULT_TRIBE_COLOR',
 ]
 
@@ -19,4 +19,4 @@ if DEV_MODE:
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-guild_ids = None if DEV_MODE else [716844885457764435] # if DEV_MODE is not enabled commands will be available globally
+guild_id = None if not DEV_MODE else 716844885457764435 # if DEV_MODE is not enabled commands will be available globally

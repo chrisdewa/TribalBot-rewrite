@@ -1,36 +1,41 @@
 
-from discord import Guild, Member, ApplicationContext
+from typing import Optional
+from discord import Guild, Member
 
 from lib.orm.models import LogEntry, Tribe, GuildConfig
 
 async def create_new_tribe(
-    ctx: ApplicationContext, 
+    guild: Guild,
     name: str, 
     color: int, 
-    leader: int
+    leader: Member,
+    author: Optional[Member] = None,
     # TODO: add categories
 ) -> Tribe:
     """Creates a new tribe with the passed parameters
     It also creates a log entry for the tribe's creation
 
     Args:
-        ctx (discord.ApplicationContext): the context for creating the tribe
+        guild (discord.Guild): the guild of the tribe
         name (str): name of the tribe
         color (int): color of the tribe
         leader (int): the ID of the tribe leader
+        author (Optional[author]): the user that called this command, defaults to tribe leader
 
     Returns:
-        Tribe: the created tribe
+        Tribe: the newly created tribe
     """
-    guild_config, _ = await GuildConfig.get_or_create(guild_id=ctx.guild.id)
+    author = author or leader
+    
+    guild_config, _ = await GuildConfig.get_or_create(guild_id=guild.id)
     tribe = await Tribe.create(
         guild_config=guild_config, 
         name=name,
         color=color,
-        leader=leader
+        leader=leader.id
     )
     await LogEntry.create(tribe=tribe, 
-                          text=f'Tribe was created with name "{tribe.name}" and id "{tribe.pk}" by user "{ctx.author}"'
+                          text=f'Tribe was created with name "{tribe.name}" and id "{tribe.pk}" by user "{author}"'
                           )
     return tribe
 
