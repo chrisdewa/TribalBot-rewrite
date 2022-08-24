@@ -9,7 +9,19 @@ async def create_new_tribe(
     color: int, 
     leader: int
     # TODO: add categories
-) -> Tribe:    
+) -> Tribe:
+    """Creates a new tribe with the passed parameters
+    It also creates a log entry for the tribe's creation
+
+    Args:
+        ctx (discord.ApplicationContext): the context for creating the tribe
+        name (str): name of the tribe
+        color (int): color of the tribe
+        leader (int): the ID of the tribe leader
+
+    Returns:
+        Tribe: the created tribe
+    """
     guild_config, _ = await GuildConfig.get_or_create(guild_id=ctx.guild.id)
     tribe = await Tribe.create(
         guild_config=guild_config, 
