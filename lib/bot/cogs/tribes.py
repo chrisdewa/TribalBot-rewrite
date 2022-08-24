@@ -4,7 +4,7 @@ from discord import Guild
 from discord.commands import ApplicationContext, slash_command, Option
 
 from lib.bot import TribalBot
-from lib.constants import guild_ids
+from lib.constants import DEFAULT_TRIBE_COLOR, guild_ids
 from lib.orm.models import *
 from lib.controllers.tribes import *
     
@@ -49,10 +49,10 @@ class TribeCog(Cog, name='TribeCog', description='Cog for tribe commands'):
             min_value=0,
             max_value=16777215,
             optional=True,
-            default=None
+            default=DEFAULT_TRIBE_COLOR
         )
     ):
-        tribe = await Tribe.create(name=name, color=color, leader=ctx.author.id)
+        tribe = await create_new_tribe(ctx=ctx, name=name, color=color, leader=ctx.author.id)
         print(tribe)
         await ctx.respond(f'Tribe created with id: {tribe.pk}')
         
