@@ -18,9 +18,10 @@ async def init_db():
     """Set's up tortoise orm. 
     `Tortoise.generate_schemas` should only be called when a change is made to the database.
     """
+    print('[!] initializing database')
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
 
 async def close_db():
-    print(['[!] closing the database'])
+    print('[!] closing the database')
     await Tortoise.close_connections() 

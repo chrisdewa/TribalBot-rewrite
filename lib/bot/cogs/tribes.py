@@ -10,10 +10,10 @@ from lib.controllers.tribes import *
 class TribeCog(Cog, name='TribeCog', description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
-        print(f'>> {self.qualified_name} Cog loaded')
+        print(f'[+] {self.qualified_name} Cog loaded')
     
-    def cog_unload(self) -> None:
-        print(f'>> {self.qualified_name} Cog unloaded')
+    async def cog_unload(self) -> None:
+        print(f'[-] {self.qualified_name} Cog unloaded')
     
     @app_commands.command(name='list-tribes', description="Returns a list of the server's tribes")
     async def list_tribes(self, interaction: Interaction):

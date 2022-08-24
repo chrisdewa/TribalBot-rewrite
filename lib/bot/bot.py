@@ -11,6 +11,7 @@ from discord.ext.commands import Bot
 
 from lib.constants import BOT_TOKEN as TOKEN, guild_id, DEV_MODE
 from lib.orm.config import *
+from lib.utils.misc import separator
 
 
 class TribalBot(Bot):
@@ -23,14 +24,10 @@ class TribalBot(Bot):
                          )
     
     async def setup_hook(self) -> None:
-        print('[!] initializing database')
         await init_db()
-        
-        print('[!] Loading cogs')
         await self.load_cogs()
         
         if DEV_MODE:
-            print('[!] bot in development mode')
             guild = discord.Object(id=guild_id)
             self.tree.copy_global_to(guild=guild)
             
@@ -49,22 +46,25 @@ class TribalBot(Bot):
             async with cls() as bot:
                 print('[!] Starting bot up')
                 await bot.start(TOKEN)
-                
-        asyncio.run(runner())
+
+        try:
+            asyncio.run(runner())
+        except KeyboardInterrupt:
+            return
             
     async def on_ready(self):
+        separator()
         print(
-            f'{"="*30}\n',
             f'TribalBot logged in:\n'
             f'USERNAME: {self.user.name}\n'
-            f'ID: {self.user.id}\n'
-            f'{"="*30}'
+            f'ID: {self.user.id}'
         )
+        separator()
     
     async def load_cogs(self):
         cogs = Path(__file__).parent / 'cogs' # absolute location of the cogs module
         base_path = 'lib.bot.cogs.'
-        
+        print('[!] Loading cogs')
         for cog in cogs.glob('*.py'): # iterate over the python files in the cogs directory
             if not cog.name.startswith('_'): # skip those starting with lower dash
                 await self.load_extension(base_path + cog.name[:-3]) # join the base path with the 

@@ -7,10 +7,10 @@ from lib.bot import TribalBot
 class TestCog(Cog, name='Test', description='Test commands'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
-        print(f'>> {self.qualified_name} Cog loaded')
+        print(f'[+] {self.qualified_name} Cog loaded')
     
-    def cog_unload(self) -> None:
-        print(f'>> {self.qualified_name} Cog unloaded')
+    async def cog_unload(self) -> None:
+        print(f'[-] {self.qualified_name} Cog unloaded')
     
     @app_commands.command(
         name='foo',
