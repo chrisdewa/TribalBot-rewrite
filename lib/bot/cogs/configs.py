@@ -4,7 +4,7 @@ from discord import app_commands, Interaction
 from lib.bot import TribalBot
 from lib.controllers.configs import create_new_category
 
-class ConfigurationsCog(Cog, description='Test commands'):
+class ConfigurationsCog(Cog, description='Tribe and guild configuration commands'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
         print(f'[+] {self.qualified_name} loaded')
