@@ -1,10 +1,9 @@
 from typing import Optional
 
 from discord.ext.commands import Cog
-from discord import Guild, Interaction, app_commands
+from discord import Interaction, app_commands
 
 from lib.bot import TribalBot
-# from lib.constants import DEFAULT_TRIBE_COLOR, guild_id
 from lib.orm.models import *
 from lib.controllers.tribes import *
 from lib.constants import DEFAULT_TRIBE_COLOR

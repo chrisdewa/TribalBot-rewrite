@@ -2,7 +2,7 @@ from discord.ext.commands import Cog
 from discord import app_commands, Interaction
 
 from lib.bot import TribalBot
-from lib.controllers.configs import get_guild_config, create_new_category
+from lib.controllers.configs import create_new_category
 
 class ConfigurationsCog(Cog, description='Test commands'):
     def __init__(self, bot) -> None:
