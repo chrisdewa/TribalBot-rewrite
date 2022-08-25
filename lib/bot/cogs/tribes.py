@@ -17,6 +17,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         print(f'[-] {self.qualified_name} unloaded')
     
     @app_commands.command(name='tribe-list', description="Returns a list of the server's tribes")
+    @app_commands.guild_only()
     async def tribe_list(self, interaction: Interaction):
         tribes = await get_all_guild_tribes(interaction.guild)
         await interaction.response.send_message(f'Server tribes: {tribes}')
@@ -26,18 +27,18 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                            category='The category for the tribe (optional)',
                            color='The decimal number of the color for your tribe')
     @app_commands.autocomplete(category=autocomplete_categories)
+    @app_commands.guild_only()
     async def tribe_create_cmd(self, 
                                interaction: Interaction,
                                name: app_commands.Range[str, 5, 30],
                                color: app_commands.Range[int, 0, 16777215] = DEFAULT_TRIBE_COLOR,
-                               category: Optional[str] = None,
-                               ):
-        kw = dict(
-            guild=interaction.guild, 
-            name=name, 
-            color=color,
-            leader=interaction.user,
-        )
+                               category: Optional[str] = None):
+        kw = {
+            'guild': interaction.guild, 
+            'name': name, 
+            'color': color,
+            'leader': interaction.user,
+        }
         if category:
             cat = await get_tribe_category(interaction.guild, name)
             kw['category'] = cat

@@ -14,6 +14,7 @@ class ConfigurationsCog(Cog, description='Tribe and guild configuration commands
     
     @app_commands.command(name='category-create', description='Creates a new tribe category')
     @app_commands.describe(name='The name of the category')
+    @app_commands.guild_only()
     async def category_create_command(
         self, 
         interaction: Interaction,
