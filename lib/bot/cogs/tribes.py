@@ -7,7 +7,8 @@ from lib.bot import TribalBot
 from lib.orm.models import *
 from lib.controllers.tribes import *
 from lib.constants import DEFAULT_TRIBE_COLOR
-    
+from lib.utils.checks import guild_has_leaders_role
+
 class TribeCog(Cog, description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
@@ -28,6 +29,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                            color='The decimal number of the color for your tribe')
     @app_commands.autocomplete(category=autocomplete_categories)
     @app_commands.guild_only()
+    @guild_has_leaders_role()
     async def tribe_create_cmd(self, 
                                interaction: Interaction,
                                name: app_commands.Range[str, 5, 30],
@@ -51,12 +53,20 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 "You're already a member of a tribe in the selected category (or the default category)",
                 ephemeral=True
             )
+        await interaction.response.defer(ephemeral=True)
         
         tribe = await create_new_tribe(**kw)
-        await interaction.response.send_message(f"Success! You've founded tribe {tribe.name} with id: {tribe.pk}")
+        guild_config: GuildConfig = await tribe.guild_config
+        role_id = guild_config.leaders_role
+        role = interaction.guild.get_role(role_id)
+        await interaction.user.add_roles(role)
+        
+        await interaction.response.send_message(
+            f"Success! You've founded tribe {tribe.name} with id: {tribe.pk}", 
+            ephemeral=True
+        )
         
         
-
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))
         
