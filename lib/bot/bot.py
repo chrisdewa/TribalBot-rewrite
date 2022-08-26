@@ -28,7 +28,7 @@ class TribalBot(Bot):
         
         @tree.error
         async def on_app_command_error(interaction: Interaction, error: AppCommandError):
-            if interaction.response.is_done():
+            if interaction.response.is_done(): # an error message has already been delivered to the user
                 return
             else:
                 await interaction.response.send_message(

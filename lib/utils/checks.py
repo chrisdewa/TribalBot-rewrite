@@ -12,10 +12,8 @@ def is_chrisdewa():
 def guild_has_leaders_role():
     """Blocks commands unless the server admins have set up the leader's role"""
     async def predicate(interaction: Interaction) -> bool:
-        print('this is running')
         guild = interaction.guild
         if not guild: return False
-        print('there is a guild')
         guild_config = await get_guild_config(guild)
         if not guild_config.leaders_role or not guild.get_role(guild_config.leaders_role):
             await interaction.response.send_message(
