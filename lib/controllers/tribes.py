@@ -77,7 +77,9 @@ async def get_all_member_tribes(member: Member) -> set[Tribe]:
     )
     return tribes
 
-async def autocomplete_categories(interaction: Interaction, current: str):
+async def autocomplete_categories(interaction: Interaction, current: str) -> list[app_commands.Choice]:
+    """Autocomplete function for categories
+    """
     guild = interaction.guild
     guild_config = await get_guild_config(guild)
     cats = await TribeCategory.filter(guild_config=guild_config, name__istartswith=current)
@@ -86,6 +88,15 @@ async def autocomplete_categories(interaction: Interaction, current: str):
         for cat in cats
     ]
 
-async def get_tribe_category(guild: Guild, name: str):
+async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
+    """Returns a tribe category by name
+
+    Args:
+        guild (Guild): The guild the category belongs to
+        name (str): the name of the category (Case Sensitive)
+
+    Returns:
+        TribeCategory | None: Returns None if no tribe was found
+    """
     guild_config = await get_guild_config(guild)
     return await TribeCategory.get_or_none(guild_config=guild_config, name=name)
