@@ -12,11 +12,11 @@ class ConfigurationsCog(Cog, description='Tribe and guild configuration commands
     async def cog_unload(self) -> None:
         print(f'[-] {self.qualified_name} unloaded')
     
-    @app_commands.command(name='select-tribe-leader', description='Selects the leaders role. [Caution] Overwrites previous setting.')
-    @app_commands.describe(name='The name of the category')
+    @app_commands.command(name='select-leaders-role', description='Selects the leaders role. [Caution] Overwrites previous setting.')
+    @app_commands.describe(role='The role to be assigned to all tribe leaders')
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True, manage_roles=True)
-    async def select_tribe_leader(
+    async def select_leaders_role(
         self,
         itr: Interaction,
         role: Role,
@@ -24,7 +24,6 @@ class ConfigurationsCog(Cog, description='Tribe and guild configuration commands
         await set_leaders_role(itr.guild, role)
         await itr.response.send_message(f'Done! The new Leaders role is {role.mention}', ephemeral=True)
 
-    
     
     @app_commands.command(name='category-create', description='Creates a new tribe category')
     @app_commands.describe(name='The name of the category')
