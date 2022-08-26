@@ -7,6 +7,8 @@ from pathlib import Path
 
 import discord
 from discord.ext.commands import Bot
+from discord import Interaction
+from discord.app_commands import AppCommandError
 # from discord import app_commands
 
 from lib.constants import BOT_TOKEN as TOKEN, guild_id, DEV_MODE
@@ -22,6 +24,18 @@ class TribalBot(Bot):
                          intents=discord.Intents.default(),
                          **options
                          )
+        tree = self.tree
+        
+        @tree.error
+        async def on_app_command_error(interaction: Interaction, error: AppCommandError):
+            if interaction.response.is_done():
+                return
+            else:
+                await interaction.response.send_message(
+                    f'The command failed because "{error}"', ephemeral=True
+                )
+                raise error
+            
     
     async def setup_hook(self) -> None:
         await init_db()
@@ -37,7 +51,6 @@ class TribalBot(Bot):
         if not self.is_closed():
             await self.close()
         await close_db()
-    
     
     @classmethod
     def go(cls):
