@@ -1,10 +1,12 @@
-from email.policy import default
 from tortoise import fields
 from tortoise.models import Model
 
 from functools import partial
 
 from lib.constants import DEFAULT_TRIBE_COLOR
+
+from .mixins import *
+
 
 __all__ = [
     'GuildConfig',
@@ -62,20 +64,36 @@ class TribeCategory(Model):
     class Meta:
         table = "tribe_categories"
 
-class Tribe(Model):
+
+class TribeJoinApplication(CreatedMixin, Model):
+    tribe = fields.ForeignKeyField('models.Tribe', related_name='join_applications', on_delete=fields.CASCADE)
+    applicant = fields.IntField() # applicant id
+    # created = fields.DatetimeField(auto_now_add=True)
+    
+    class Meta:
+        table = 'tribe_join_applications'
+
+
+class Tribe(CreatedMixin, Model):
     guild_config = fields.ForeignKeyField('models.GuildConfig', related_name='tribes', on_delete=fields.CASCADE)
     name = fields.CharField(max_length=30)
     leader = fields.IntField()
     manager = fields.IntField(null=True)
     members = fields.JSONField(default=_default_members)
     banner = fields.JSONField(default=_default_banner)
-    created = fields.DatetimeField(auto_now_add=True)
+    # created = fields.DatetimeField(auto_now_add=True)
     category = fields.ForeignKeyField('models.TribeCategory', related_name='tribes', on_delete=fields.CASCADE, null=True)
     color = fields.IntField(default=DEFAULT_TRIBE_COLOR)
     log_entries: fields.ReverseRelation[LogEntry]
+    join_applications: fields.ReverseRelation[TribeJoinApplication]
     
     class Meta:
         table = "tribes"
+    
+    @property
+    def staff(self) -> tuple[int]:
+        """returns a tuple of ids from the leader and manager if any"""
+        return self.leader, self.manager
 
     def __str__(self) -> str:
         return f'Tribe(pk={self.pk}, guild_id={self.guild_config_id}, name={self.name}, leader={self.leader})'
