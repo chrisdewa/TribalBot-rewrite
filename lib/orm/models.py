@@ -75,14 +75,18 @@ class TribeJoinApplication(CreatedMixin, Model):
 
 
 class Tribe(CreatedMixin, Model):
-    guild_config = fields.ForeignKeyField('models.GuildConfig', related_name='tribes', on_delete=fields.CASCADE)
+    guild_config: GuildConfig = fields.ForeignKeyField('models.GuildConfig', related_name='tribes', on_delete=fields.CASCADE)
     name = fields.CharField(max_length=30)
     leader = fields.IntField()
     manager = fields.IntField(null=True)
     members = fields.JSONField(default=_default_members)
     banner = fields.JSONField(default=_default_banner)
     # created = fields.DatetimeField(auto_now_add=True)
-    category = fields.ForeignKeyField('models.TribeCategory', related_name='tribes', on_delete=fields.CASCADE, null=True)
+    category: TribeCategory | None = fields.ForeignKeyField('models.TribeCategory', 
+                                                            related_name='tribes', 
+                                                            on_delete=fields.CASCADE, 
+                                                            null=True
+                                                            )
     color = fields.IntField(default=DEFAULT_TRIBE_COLOR)
     log_entries: fields.ReverseRelation[LogEntry]
     join_applications: fields.ReverseRelation[TribeJoinApplication]
