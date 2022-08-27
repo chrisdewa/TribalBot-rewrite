@@ -1,9 +1,9 @@
 
 from typing import Optional
 
-from discord import Guild, Member, app_commands, Interaction
+from discord import Guild, Member, app_commands, Interaction, Embed, Color
 
-from lib.orm.models import LogEntry, Tribe, TribeCategory
+from lib.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication
 from .configs import get_guild_config
 
 
@@ -88,6 +88,17 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
         for cat in cats
     ]
 
+async def autocomplete_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
+    """Autocomplete for guild tribes"""
+    guild = interaction.guild
+    guild_config = await get_guild_config(guild)
+    tribes = await Tribe.filter(guild_config=guild_config, name__startswith=current)
+    return [
+        app_commands.Choice(name=tribe.name, value=tribe.name)
+        for tribe in tribes
+    ]
+    
+
 async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
     """Returns a tribe category by name
 
@@ -100,3 +111,42 @@ async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
     """
     guild_config = await get_guild_config(guild)
     return await TribeCategory.get_or_none(guild_config=guild_config, name=name)
+
+
+async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
+    """Returns a Tribe for param guild with param name (case sensitivie)
+
+    Args:
+        guild (Guild): guild of the tribe
+        name (str): case sensitive name of the tribe
+
+    Returns:
+        Tribe | None: the tribe if found
+    """
+    guild_config = await get_guild_config(guild)
+    tribe = await Tribe.get_or_none(guild_config=guild_config, name=name)
+    return tribe
+
+async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) -> TribeJoinApplication:
+    """Creates a join application in the target tribe for the applicant (interaction.user)
+    Also creates a log entry in the tribe and notifies the tribe leader and manager
+    """
+    applicant = interaction.user
+    guild = interaction.guild
+    leader = guild.get_member(tribe.leader)
+    manager = guild.get_member(tribe.manager) if tribe.manager else None
+    
+    application =  await TribeJoinApplication.create(tribe=tribe, applicant=applicant.id)
+
+    for u in (leader, manager):
+        if u:
+            await u.send(embed=Embed(
+                title='New Tribe Join Application',
+                description=f'Applicant "{applicant}"\n'
+                            f'Date of application: {application.pretty_dt}',
+                color=Color.random()
+            ))
+            
+    return application
+     
+    

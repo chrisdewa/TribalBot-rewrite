@@ -43,6 +43,11 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         }
         if category:
             cat = await get_tribe_category(interaction.guild, name)
+            if not cat:
+                return await interaction.response.send_message(
+                    f'There\'s no category with name "{category}", try a different category',
+                    ephemeral=True
+                )
             kw['category'] = cat
             
         tribes = await get_all_member_tribes(interaction.user)
@@ -65,6 +70,31 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             f"Success! You've founded tribe {tribe.name} with id: {tribe.pk}", 
             ephemeral=True
         )
+    
+    @app_commands.command(name='tribe-join', description='Creates a join application for target tribe')
+    @app_commands.describe(name='The name of the tribe you want to join (Case Sensitive)')
+    @app_commands.autocomplete(category=autocomplete_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def tribe_join_cmd(
+        self, 
+        interaction: Interaction,
+        name: str,
+    ):
+        tribe = await get_tribe_by_name(interaction.guild, name)
+        if not tribe:
+            return await interaction.response.send_message(
+                f'There\'s no tribe with the name "{name}"',
+                ephemeral=True
+            )
+        
+        application = await create_tribe_join_application(tribe, interaction.user.id)
+        
+        return await interaction.response.send_message(
+            f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
+            ephemeral=True
+        )
+        
         
         
 async def setup(bot: TribalBot):
