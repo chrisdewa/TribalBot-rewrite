@@ -9,19 +9,27 @@ import discord
 from discord.ext.commands import Bot
 from discord import Interaction
 from discord.app_commands import AppCommandError
+from discord.app_commands.errors import CommandNotFound
 # from discord import app_commands
 
 from lib.constants import BOT_TOKEN as TOKEN, guild_id, DEV_MODE
 from lib.orm.config import *
 from lib.utils.misc import separator
 
+_allowed_errors = (
+    CommandNotFound,
+)
 
 class TribalBot(Bot):
     def __init__(self, *args, **options):
         # Init the bot with default intents since there won't be prefixed commands
+        intents = discord.Intents.default()
+        intents.members = True
+        intents.typing = False
+        
         super().__init__(*args, 
                          command_prefix='?', 
-                         intents=discord.Intents.default(),
+                         intents=intents,
                          **options
                          )
         tree = self.tree
@@ -32,10 +40,10 @@ class TribalBot(Bot):
                 return
             else:
                 await interaction.response.send_message(
-                    f'The command failed because "{error}"', ephemeral=True
+                    f'The command failed because `{error}`', ephemeral=True
                 )
-                raise error
-            
+                if not isinstance(error, _allowed_errors):
+                    raise error
     
     async def setup_hook(self) -> None:
         await init_db()
