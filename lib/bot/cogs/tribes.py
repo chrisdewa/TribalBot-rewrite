@@ -90,6 +90,22 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         
         application = await create_tribe_join_application(tribe, interaction)
         
+        guild = interaction.guild
+        applicant = interaction.user
+        leader = guild.get_member(tribe.leader)
+        manager = guild.get_member(tribe.manager) if tribe.manager else None
+        
+        for u in (leader, manager):
+            if u:
+                await u.send(embed=Embed(
+                    title='New Tribe Join Application',
+                    description=f'**Server:** {guild.name}\n'
+                                f'**Tribe:** {tribe.name}\n'
+                                f'**Applicant:** {applicant}\n'
+                                f'**Date:** of application: {application.pretty_dt}',
+                    color=Color.random()
+                ))
+        
         return await interaction.response.send_message(
             f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
             ephemeral=True

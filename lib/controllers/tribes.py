@@ -127,29 +127,27 @@ async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
     tribe = await Tribe.get_or_none(guild_config=guild_config, name=name)
     return tribe
 
-async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) -> TribeJoinApplication:
+async def get_member_categories(member: Member) -> set[TribeCategory]:
+    tribes = await get_all_member_tribes(member)
+    cats = {await tribe.category for tribe in tribes}
+    return cats
+
+async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) -> TribeJoinApplication | None:
     """Creates a join application in the target tribe for the applicant (interaction.user)
     Also creates a log entry in the tribe and notifies the tribe leader and manager
+    
+    returns:
+        TribeJoinApplication | None: the application of the member to the target tribe
     """
-    applicant = interaction.user
+    applicant: Member = interaction.user
     guild = interaction.guild
-    leader = guild.get_member(tribe.leader)
-    manager = guild.get_member(tribe.manager) if tribe.manager else None
-    breakpoint()
-        
-    application =  await TribeJoinApplication.create(tribe=tribe, applicant=applicant.id)
-
-    for u in (leader, manager):
-        if u:
-            await u.send(embed=Embed(
-                title='New Tribe Join Application',
-                description=f'**Server:** {guild.name}\n'
-                            f'**Tribe:** {tribe.name}\n'
-                            f'**Applicant:** {applicant}\n'
-                            f'**Date:** of application: {application.pretty_dt}',
-                color=Color.random()
-            ))
-            
-    return application
+    
+    cat = await tribe.category
+    if cat in await get_member_categories(applicant):
+        return
+    else:
+        application =  await TribeJoinApplication.create(tribe=tribe, applicant=applicant.id)
+                
+        return application
      
     
