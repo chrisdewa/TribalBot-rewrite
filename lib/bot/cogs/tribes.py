@@ -90,6 +90,14 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         
         application = await create_tribe_join_application(tribe, interaction)
         
+        if not application:
+            cat = await tribe.category
+            cat = cat.name if cat else 'Default'
+            return await interaction.response.send_message(
+                f"Application error: You are already a member of a tribe in this tribe's category ({cat})",
+                ephemeral=True
+            )
+        
         guild = interaction.guild
         applicant = interaction.user
         leader = guild.get_member(tribe.leader)
@@ -110,7 +118,6 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
             ephemeral=True
         )
-        
         
         
 async def setup(bot: TribalBot):
