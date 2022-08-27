@@ -135,15 +135,18 @@ async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) 
     guild = interaction.guild
     leader = guild.get_member(tribe.leader)
     manager = guild.get_member(tribe.manager) if tribe.manager else None
-    
+    breakpoint()
+        
     application =  await TribeJoinApplication.create(tribe=tribe, applicant=applicant.id)
 
     for u in (leader, manager):
         if u:
             await u.send(embed=Embed(
                 title='New Tribe Join Application',
-                description=f'Applicant "{applicant}"\n'
-                            f'Date of application: {application.pretty_dt}',
+                description=f'**Server:** {guild.name}\n'
+                            f'**Tribe:** {tribe.name}\n'
+                            f'**Applicant:** {applicant}\n'
+                            f'**Date:** of application: {application.pretty_dt}',
                 color=Color.random()
             ))
             

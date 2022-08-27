@@ -88,7 +88,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 ephemeral=True
             )
         
-        application = await create_tribe_join_application(tribe, interaction.user.id)
+        application = await create_tribe_join_application(tribe, interaction)
         
         return await interaction.response.send_message(
             f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
