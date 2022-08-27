@@ -73,7 +73,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
     
     @app_commands.command(name='tribe-join', description='Creates a join application for target tribe')
     @app_commands.describe(name='The name of the tribe you want to join (Case Sensitive)')
-    @app_commands.autocomplete(category=autocomplete_tribes)
+    @app_commands.autocomplete(name=autocomplete_tribes)
     @app_commands.guild_only()
     @guild_has_leaders_role()
     async def tribe_join_cmd(
