@@ -1,4 +1,5 @@
 
+import asyncio
 from typing import Optional
 
 from discord import Guild, Member, app_commands, Interaction, Embed, Color
@@ -71,10 +72,11 @@ async def get_all_member_tribes(member: Member) -> set[Tribe]:
         set[Tribe]
     """
     guild_config = await get_guild_config(member.guild)
-    tribes = set(
-        await Tribe.filter(guild_config=guild_config, leader=member.id) +
-        await Tribe.filter(guild_config=guild_config, members__contains=member.id)
-    )
+    tribes = set(await asyncio.gather(
+        Tribe.filter(guild_config=guild_config, leader=member.id),
+        Tribe.filter(guild_config=guild_config, members__contains=member.id)
+    ))
+    
     return tribes
 
 async def autocomplete_categories(interaction: Interaction, current: str) -> list[app_commands.Choice]:
@@ -140,7 +142,6 @@ async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) 
         TribeJoinApplication | None: the application of the member to the target tribe
     """
     applicant: Member = interaction.user
-    guild = interaction.guild
     
     cat = await tribe.category
     if cat in await get_member_categories(applicant):

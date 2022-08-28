@@ -1,7 +1,6 @@
 from discord import Interaction, app_commands
 
 from lib.controllers.configs import get_guild_config
-from lib.orm.models import GuildConfig
 
 def is_chrisdewa():
     """Allows an app command to run only if the user is ChrisDewa#4552"""

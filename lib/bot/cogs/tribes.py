@@ -81,16 +81,16 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         interaction: Interaction,
         name: str,
     ):
-        tribe = await get_tribe_by_name(interaction.guild, name)
+        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
         if not tribe:
             return await interaction.response.send_message(
                 f'There\'s no tribe with the name "{name}"',
                 ephemeral=True
             )
         
-        application = await create_tribe_join_application(tribe, interaction)
+        application = await create_tribe_join_application(tribe, interaction) # create an application
         
-        if not application:
+        if not application: # it might be unsuccessful if the user already has a tribe in the given category
             cat = await tribe.category
             cat = cat.name if cat else 'Default'
             return await interaction.response.send_message(
@@ -103,7 +103,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         leader = guild.get_member(tribe.leader)
         manager = guild.get_member(tribe.manager) if tribe.manager else None
         
-        for u in (leader, manager):
+        for u in (leader, manager): # we notify at least the tribe leader, but also the manager if it exists
             if u:
                 await u.send(embed=Embed(
                     title='New Tribe Join Application',
@@ -118,6 +118,8 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
             ephemeral=True
         )
+    
+    
         
         
 async def setup(bot: TribalBot):
