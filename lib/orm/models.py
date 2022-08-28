@@ -66,7 +66,7 @@ class TribeCategory(Model):
 
 
 class TribeJoinApplication(CreatedMixin, Model):
-    tribe = fields.ForeignKeyField('models.Tribe', related_name='join_applications', on_delete=fields.CASCADE)
+    tribe: 'Tribe' = fields.ForeignKeyField('models.Tribe', related_name='join_applications', on_delete=fields.CASCADE)
     applicant = fields.IntField() # applicant id
     # created = fields.DatetimeField(auto_now_add=True)
     

@@ -6,6 +6,7 @@ from discord import Guild, Member, app_commands, Interaction, Embed, Color
 
 from lib.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication
 from .configs import get_guild_config
+from .errors import BadTribeCategory, InvalidMember
 
 
 async def create_new_tribe(
@@ -151,4 +152,21 @@ async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) 
                 
         return application
      
+
+async def accept_applicant(applicant: Member, application: TribeJoinApplication):
+    """
+    Allows a member into a tribe. 
+    Only works under these conditions:
+        - the member doesn't have other tribes in the same category
+    
+    """
+    tribe = await application.tribe
+    
+    cats = await get_member_categories(applicant)
+    if tribe.category not in cats:
+        tribe.members.append(applicant.id)
+        await tribe.save()
+        await application.delete()
+    else:
+        raise BadTribeCategory('Member is already a part of another tribe in this category')
     

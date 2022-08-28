@@ -1,0 +1,3 @@
+
+class TribeBotBaseException(Exception):
+    pass
