@@ -12,7 +12,7 @@ from discord.app_commands import AppCommandError
 from discord.app_commands.errors import CommandNotFound
 # from discord import app_commands
 
-from lib.constants import BOT_TOKEN as TOKEN, guild_id, DEV_MODE
+from lib.constants import guild_id, DEV_MODE
 from lib.orm.config import *
 from lib.utils.misc import separator
 
@@ -34,7 +34,7 @@ class TribalBot(Bot):
                          )
         tree = self.tree
         
-        @tree.error
+        #@tree.error
         async def on_app_command_error(interaction: Interaction, error: AppCommandError):
             if interaction.response.is_done(): # an error message has already been delivered to the user
                 return
@@ -60,19 +60,6 @@ class TribalBot(Bot):
             await self.close()
         await close_db()
     
-    @classmethod
-    def go(cls):
-        """Starts up the bot"""
-        async def runner():
-            async with cls() as bot:
-                print('[!] Starting bot up')
-                await bot.start(TOKEN)
-
-        try:
-            asyncio.run(runner())
-        except KeyboardInterrupt:
-            return
-            
     async def on_ready(self):
         separator()
         print(
