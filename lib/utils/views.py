@@ -25,6 +25,8 @@ class ApplicationPaginatorView(discord.ui.View):
         self.head = head
 
         self.invalid_applications = []
+        
+        
 
     async def interaction_check(self, itr: Interaction) -> bool:
         if itr.user == self.owner:
@@ -73,13 +75,23 @@ class ApplicationPaginatorView(discord.ui.View):
     async def _approve(self, itr: Interaction, button: ui.Button):
         application = self.applications[self.head]
         applicant = itr.guild.get_member(application.applicant)
-        await accept_applicant(applicant, application)
+        msg = None
+        
+        try:
+            await accept_applicant(applicant, application)
+        except BadTribeCategory as err:
+            self.invalid_applications.append(application)
+            msg = str(err)
+            
+        msg = msg or f'Member {applicant} approved into the tribe!'
         self.applications.remove(application)
-        self.head += 1
-        await itr.response.edit_message(embed=self.embeds[self.index], view=self)
-        await itr.response.send_message(
-            f'Member {applicant} approved into the tribe!', ephemeral=True
+        embed = Embed(
+            title=f'Member Accepted',
+            description=f'Member {applicant} was accepted into the tribe',
+            color=Color.green()
         )
+        
+        await itr.response.edit_message(embed=embed, view=self)
     
     @ui.button(custom_id="deny", emoji='🚫', row=0)
     async def _deny(self, itr: Interaction, button: ui.Button):
@@ -87,11 +99,14 @@ class ApplicationPaginatorView(discord.ui.View):
         applicant = itr.guild.get_member(application.applicant)
         await application.delete()
         self.applications.remove(application)
-        self.head += 1
-        await itr.response.edit_message(embed=self.embeds[self.index], view=self)
-        await itr.response.send_message(
-            f'Member {applicant} approved into the tribe!', ephemeral=True
+        itr.channel.send()
+        embed = Embed(
+            title=f'Member Denied',
+            description=f'Member {applicant if applicant else ""} application was denied',
+            color=Color.red()
         )
+        await itr.response.edit_message(embed=embed, view=self)
+        
 
     @ui.button(custom_id="Next", emoji="▶️", row=0)
     async def _next(self, itr: discord.Interaction, button: ui.Button):

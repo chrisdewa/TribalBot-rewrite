@@ -87,7 +87,6 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 f'There\'s no tribe with the name "{name}"',
                 ephemeral=True
             )
-        
         application = await create_tribe_join_application(tribe, interaction) # create an application
         
         if not application: # it might be unsuccessful if the user already has a tribe in the given category
@@ -97,7 +96,6 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 f"Application error: You are already a member of a tribe in this tribe's category ({cat})",
                 ephemeral=True
             )
-        
         guild = interaction.guild
         applicant = interaction.user
         leader = guild.get_member(tribe.leader)
@@ -113,7 +111,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                                 f'**Date:** of application: {application.pretty_dt}',
                     color=Color.random()
                 ))
-        
+
         return await interaction.response.send_message(
             f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
             ephemeral=True
