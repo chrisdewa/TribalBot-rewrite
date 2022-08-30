@@ -17,7 +17,7 @@ __all__ = [
     'TribeMember',
 ]
 
-_default_banner = partial(dict.copy, {'title': '', 'description': '', 'image': ''})
+_default_banner = partial(dict.copy, {'description': '', 'image': ''})
 
 
 class GuildConfig(Model):
@@ -113,6 +113,5 @@ class Tribe(CreatedMixin, Model):
     
     def __repr__(self) -> str:
         return self.__str__()
-    
-    
+
     

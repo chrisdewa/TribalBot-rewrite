@@ -22,6 +22,9 @@ class TribeCog(Cog, description='Cog for tribe commands'):
     @app_commands.guild_only()
     async def tribe_list(self, interaction: Interaction):
         tribes = await get_all_guild_tribes(interaction.guild)
+        
+        
+        
         await interaction.response.send_message(f'Server tribes: {tribes}')
     
     @app_commands.command(name='tribe-create', description='Creates a new tribe with you as the leader!')
@@ -143,7 +146,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             )
             
         
-        if not member_can_manage_tribe(interaction.user, tribe):
+        if interaction.user.id not in tribe.staff:
             return await interaction.response.send_message(
                 'You cannot manage this tribe',
                 ephemeral=True

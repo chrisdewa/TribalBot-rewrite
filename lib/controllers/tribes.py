@@ -98,10 +98,6 @@ async def get_all_member_tribes(member: Member) -> set[Tribe]:
     
     return tribes
 
-def member_can_manage_tribe(member: Member, tribe: Tribe) -> bool:
-    """Returns true if the member can manage the target tribe"""
-    mid = member.id
-    return tribe.leader == mid or tribe.manager == mid
 
 # TODO: cache autocompletes
 
@@ -213,4 +209,38 @@ async def accept_applicant(applicant: Member, application: TribeJoinApplication)
         await application.delete()
     else:
         raise BadTribeCategory('Member is already a part of another tribe in this category')
+
+def get_tribe_embed(tribe: Tribe) -> Embed:
     
+    embed = Embed(
+        title=tribe.name,
+        color=tribe.color,
+    )
+    if desc := tribe.banner.get('description'):
+        embed.description = desc
+    if img := tribe.banner.get('image'):
+        embed.set_image(url=img)
+    
+    return embed
+
+async def parse_tribe_members(tribe: Tribe, guild: Guild) -> set[Member]:
+    """Returns a set of discord.Member from the tribe's members
+    Only returns those members that are currently part of the server"""
+    return {
+        member for tm in await tribe.members
+        if (member := guild.get_member(tm.member_id))
+    }
+
+async def prune_tribe_members(tribe: Tribe, guild: Guild) -> set[int]:
+    """remove the tribe members that are no longer part of the guild"""
+    members = await tribe.members
+    to_prune = []
+    prunned = set()
+    for tm in members:
+        if not guild.get_member(tm.member_id):
+            to_prune.append(tm.delete())
+            prunned.add(tm.member_id)
+    await asyncio.gather(*to_prune)
+    return prunned
+    
+        
