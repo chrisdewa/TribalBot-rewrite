@@ -11,10 +11,12 @@ from .mixins import *
 __all__ = [
     'GuildConfig',
     'TribeCategory',
+    'LogEntry',
     'Tribe',
+    'TribeJoinApplication',
+    'TribeMember',
 ]
 
-_default_members = partial(list.copy, [])
 _default_banner = partial(dict.copy, {'title': '', 'description': '', 'image': ''})
 
 
@@ -73,21 +75,28 @@ class TribeJoinApplication(CreatedMixin, Model):
     class Meta:
         table = 'tribe_join_applications'
 
+class TribeMember(Model):
+    member_id = fields.IntField()
+    tribe: 'Tribe' = fields.ForeignKeyField('models.Tribe',
+                                            related_name='members',
+                                            on_delete=fields.CASCADE)
 
 class Tribe(CreatedMixin, Model):
-    guild_config: GuildConfig = fields.ForeignKeyField('models.GuildConfig', related_name='tribes', on_delete=fields.CASCADE)
+    guild_config: GuildConfig = fields.ForeignKeyField('models.GuildConfig', 
+                                                       related_name='tribes', 
+                                                       on_delete=fields.CASCADE)
     name = fields.CharField(max_length=30)
     leader = fields.IntField()
     manager = fields.IntField(null=True)
-    members = fields.JSONField(default=_default_members)
     banner = fields.JSONField(default=_default_banner)
     # created = fields.DatetimeField(auto_now_add=True)
     category: TribeCategory | None = fields.ForeignKeyField('models.TribeCategory', 
                                                             related_name='tribes', 
                                                             on_delete=fields.CASCADE, 
-                                                            null=True
-                                                            )
+                                                            null=True)
     color = fields.IntField(default=DEFAULT_TRIBE_COLOR)
+    # members = fields.JSONField(default=_default_members)
+    members: fields.ReverseRelation[TribeMember]
     log_entries: fields.ReverseRelation[LogEntry]
     join_applications: fields.ReverseRelation[TribeJoinApplication]
     

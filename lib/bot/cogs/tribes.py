@@ -118,6 +118,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         )
     
     
+    
         
         
 async def setup(bot: TribalBot):

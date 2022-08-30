@@ -4,7 +4,7 @@ from typing import Optional
 
 from discord import Guild, Member, app_commands, Interaction, Embed, Color
 
-from lib.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication
+from lib.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication, TribeMember
 from lib.constants import DATABASE_URL
 
 from .configs import get_guild_config
@@ -36,16 +36,20 @@ async def create_new_tribe(
     author = author or leader
     
     guild_config = await get_guild_config(guild)
+    
     tribe = await Tribe.create(
         guild_config=guild_config, 
         name=name,
         color=color,
-        leader=leader.id
+        leader=leader.id,
+        category=category
     )
+    
     await LogEntry.create(
         tribe=tribe, 
         text=f'Tribe was created with name "{tribe.name}" and id "{tribe.pk}" by user "{author}"'
     )
+    
     return tribe
 
 async def get_all_guild_tribes(guild: Guild) -> set[Tribe]:
@@ -57,30 +61,16 @@ async def get_all_guild_tribes(guild: Guild) -> set[Tribe]:
     Returns:
         set[Tribe]
     """
-    guild_config = await get_guild_config(guild)
-    tribes = await Tribe.filter(guild_config=guild_config)
+    tribes = await Tribe.filter(guild_config__guild_id=guild.id)
     return set(tribes)
 
-async def query_member_in_tribes( member: Member) -> set[Tribe]:
-    """This function is requiered because sqlite is unable to search inside json fields 
-    So if the url starts with "sqlite" the function will first query all the tribes of the server and then
-    filter bot-side (pun intended) for those that have the member in them.
-    If the database is POSTGRESQL or MYSQL (preferred) the query load will be passed to the database
-    """
+async def query_member_in_tribes(member: Member) -> set[Tribe]:
+    """Returns all the tribes a member belongs to"""
     guild = member.guild
     
-    is_sqlite = DATABASE_URL.lower().startswith('sqlite')
-    if is_sqlite:
-        # do less efficient query
-        all_tribes = await get_all_guild_tribes(guild)
-        return {t for t in all_tribes if member.id in t.members}
-    else:
-        # leave the query load to the database
-        guild_config = await get_guild_config(guild)
-        return set(await Tribe.filter(guild_id=guild_config, members__contains=member.id))
-        
+    memberships = await TribeMember.filter(member_id=member.id, tribe__guild_config__guild_id=guild.id)
+    return {await m.tribe for m in memberships}
     
-
 async def get_all_member_tribes(member: Member) -> set[Tribe]:
     """Returns a set of tribes a given member belongs to.
     It will only return tribes from the member's object guild.
@@ -94,11 +84,13 @@ async def get_all_member_tribes(member: Member) -> set[Tribe]:
     Returns:
         set[Tribe]
     """
-    guild_config = await get_guild_config(member.guild)
+    # guild_config = await get_guild_config(member.guild)
+    guild = member.guild
+    
     tribes = set([
         tribe for result in 
         await asyncio.gather(
-            Tribe.filter(guild_config=guild_config, leader=member.id),
+            Tribe.filter(guild_config__guild_id=guild.id, leader=member.id),
             query_member_in_tribes(member)
         )
         for tribe in result])
@@ -109,8 +101,7 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
     """Autocomplete function for categories
     """
     guild = interaction.guild
-    guild_config = await get_guild_config(guild)
-    cats = await TribeCategory.filter(guild_config=guild_config, name__istartswith=current)
+    cats = await TribeCategory.filter(guild_config_guild_id=guild.id, name__istartswith=current)
     return [
         app_commands.Choice(name=cat.name, value=cat.name)
         for cat in cats
@@ -119,8 +110,8 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
 async def autocomplete_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Autocomplete for guild tribes"""
     guild = interaction.guild
-    guild_config = await get_guild_config(guild)
-    tribes = await Tribe.filter(guild_config=guild_config, name__startswith=current)
+    # guild_config = await get_guild_config(guild)
+    tribes = await Tribe.filter(guild_config__guild_id=guild.id, name__startswith=current)
     return [
         app_commands.Choice(name=tribe.name, value=tribe.name)
         for tribe in tribes
@@ -137,8 +128,8 @@ async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
     Returns:
         TribeCategory | None: Returns None if no tribe was found
     """
-    guild_config = await get_guild_config(guild)
-    return await TribeCategory.get_or_none(guild_config=guild_config, name=name)
+    # guild_config = await get_guild_config(guild)
+    return await TribeCategory.get_or_none(guild_config__guild_id=guild.id, name=name)
 
 
 async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
@@ -151,8 +142,8 @@ async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
     Returns:
         Tribe | None: the tribe if found
     """
-    guild_config = await get_guild_config(guild)
-    tribe = await Tribe.get_or_none(guild_config=guild_config, name=name)
+    # guild_config = await get_guild_config(guild)
+    tribe = await Tribe.get_or_none(guild_config__guild_id=guild.id, name=name)
     return tribe
 
 async def get_member_categories(member: Member) -> set[TribeCategory]:
@@ -175,7 +166,6 @@ async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) 
         return
     else:
         application =  await TribeJoinApplication.create(tribe=tribe, applicant=applicant.id)
-                
         return application
      
 
@@ -190,8 +180,7 @@ async def accept_applicant(applicant: Member, application: TribeJoinApplication)
     
     cats = await get_member_categories(applicant)
     if tribe.category not in cats:
-        tribe.members.append(applicant.id)
-        await tribe.save()
+        await TribeMember.create(tribe=tribe, member_id=applicant.id)
         await application.delete()
     else:
         raise BadTribeCategory('Member is already a part of another tribe in this category')
