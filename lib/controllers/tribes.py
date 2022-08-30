@@ -87,15 +87,24 @@ async def get_all_member_tribes(member: Member) -> set[Tribe]:
     # guild_config = await get_guild_config(member.guild)
     guild = member.guild
     
-    tribes = set([
+    tribes = set(
         tribe for result in 
         await asyncio.gather(
             Tribe.filter(guild_config__guild_id=guild.id, leader=member.id),
             query_member_in_tribes(member)
         )
-        for tribe in result])
+        for tribe in result
+    )
     
     return tribes
+
+def member_can_manage_tribe(member: Member, tribe: Tribe) -> bool:
+    """Returns true if the member can manage the target tribe"""
+    mid = member.id
+    return tribe.leader == mid or tribe.manager == mid
+
+# TODO: cache autocompletes
+
 
 async def autocomplete_categories(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Autocomplete function for categories
@@ -107,11 +116,28 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
         for cat in cats
     ]
 
-async def autocomplete_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
+async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Autocomplete for guild tribes"""
     guild = interaction.guild
     # guild_config = await get_guild_config(guild)
     tribes = await Tribe.filter(guild_config__guild_id=guild.id, name__startswith=current)
+    return [
+        app_commands.Choice(name=tribe.name, value=tribe.name)
+        for tribe in tribes
+    ]
+
+async def autocomplete_manageable_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
+    """Auto complete for tribes where the user is a leader or manager"""
+    guild = interaction.guild
+    user = interaction.user
+    coro1 = Tribe.filter(guild_config_id=guild.id, leader=user.id)
+    coro2 = Tribe.filter(guild_config_id=guild.id, manager=user.id)
+    tribes = set(
+        tribe for sublist in
+        await asyncio.gather(coro1, coro2)
+        for tribe in sublist
+    )
+    
     return [
         app_commands.Choice(name=tribe.name, value=tribe.name)
         for tribe in tribes
@@ -167,7 +193,10 @@ async def create_tribe_join_application(tribe: Tribe, interaction: Interaction) 
     else:
         application =  await TribeJoinApplication.create(tribe=tribe, applicant=applicant.id)
         return application
-     
+    
+async def get_tribe_applications(tribe: Tribe) -> list[TribeJoinApplication]:
+    """Returns all current tribe applications"""
+    return await tribe.join_applications
 
 async def accept_applicant(applicant: Member, application: TribeJoinApplication):
     """

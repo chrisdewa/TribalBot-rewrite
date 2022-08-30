@@ -44,22 +44,28 @@ class ApplicationPaginatorView(discord.ui.View):
     @property
     def embeds(self) -> list[Embed]:
         
+        default = [Embed(
+            title='There are no applications',
+            color=Color.random(),
+        )]
+        
         embeds = []
         for application in self.applications:
             applicant = self.guild.get_member(application.applicant)
             if applicant:
                 embed = Embed(
                     title='Tribe Join Application',
-                    description=f'Tribe: {self.tribe.name}'
-                                f'Applicant: {applicant}'
-                                f'Application date: {application.pretty_dt}'
+                    description=f'Tribe: {self.tribe.name}\n'
+                                f'Applicant: {applicant}\n'
+                                f'Application date: {application.pretty_dt}',
+                    color=Color.random()
                 )
                 embeds.append(embed)
             else:
                 self.applications.remove(application)
                 self.invalid_applications.append(application)
         
-        return embeds
+        return embeds or default
         
     
     @property

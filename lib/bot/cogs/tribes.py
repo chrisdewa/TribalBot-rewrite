@@ -8,6 +8,7 @@ from lib.orm.models import *
 from lib.controllers.tribes import *
 from lib.constants import DEFAULT_TRIBE_COLOR
 from lib.utils.checks import guild_has_leaders_role
+from lib.utils.views import ApplicationPaginatorView
 
 class TribeCog(Cog, description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
@@ -65,15 +66,14 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         role_id = guild_config.leaders_role
         role = interaction.guild.get_role(role_id)
         await interaction.user.add_roles(role)
-        
-        await interaction.response.send_message(
+        await interaction.followup.send(
             f"Success! You've founded tribe {tribe.name} with id: {tribe.pk}", 
             ephemeral=True
         )
     
     @app_commands.command(name='tribe-join', description='Creates a join application for target tribe')
     @app_commands.describe(name='The name of the tribe you want to join (Case Sensitive)')
-    @app_commands.autocomplete(name=autocomplete_tribes)
+    @app_commands.autocomplete(name=autocomplete_guild_tribes)
     @app_commands.guild_only()
     @guild_has_leaders_role()
     async def tribe_join_cmd(
@@ -87,6 +87,13 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 f'There\'s no tribe with the name "{name}"',
                 ephemeral=True
             )
+        tribes = await get_all_member_tribes(interaction.user)
+        if tribe in tribes:
+            return await interaction.response.send_message(
+                'You are already part of this tribe',
+                ephemeral=True
+            )
+        
         application = await create_tribe_join_application(tribe, interaction) # create an application
         
         if not application: # it might be unsuccessful if the user already has a tribe in the given category
@@ -117,8 +124,35 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             ephemeral=True
         )
     
-    
-    
+    @app_commands.command(name='tribe-applications', description='Review Join applications to accept or deny')
+    @app_commands.describe(name='The name of the tribe you want to manage (you must be a leader or manager)')
+    @app_commands.autocomplete(name=autocomplete_manageable_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def tribe_applications_cmd(
+        self, 
+        interaction: Interaction,
+        name: str,
+    ):
+        
+        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
+        if not tribe:
+            return await interaction.response.send_message(
+                f'There\'s no tribe with the name "{name}"',
+                ephemeral=True
+            )
+            
+        
+        if not member_can_manage_tribe(interaction.user, tribe):
+            return await interaction.response.send_message(
+                'You cannot manage this tribe',
+                ephemeral=True
+            )
+        
+        applications = await get_tribe_applications(tribe)
+        
+        view = ApplicationPaginatorView(applications, tribe, interaction.user)
+        await interaction.response.send_message(embed=view.embeds[0], view=view, ephemeral=True)
         
         
 async def setup(bot: TribalBot):

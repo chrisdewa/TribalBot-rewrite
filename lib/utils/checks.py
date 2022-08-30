@@ -1,4 +1,4 @@
-from discord import Interaction, app_commands
+from discord import Interaction, app_commands, Embed, Color
 
 from lib.controllers.configs import get_guild_config
 
@@ -14,10 +14,19 @@ def guild_has_leaders_role():
         guild = interaction.guild
         if not guild: return False
         guild_config = await get_guild_config(guild)
-        if not guild_config.leaders_role or not guild.get_role(guild_config.leaders_role):
+        role = guild.get_role(guild_config.leaders_role) if guild_config.leaders_role else None
+        if not role:
             await interaction.response.send_message(
                 'The command failed because the leaders role is not configured, talk to your server admins', 
                 ephemeral=True
+            )
+            return False
+        
+        elif role >= guild.me.top_role:
+            await interaction.response.send_message(
+                "The bot's top role is below the (or is) leaders role. Talk to your server admins",
+                embed=Embed(color=Color.orange()).set_image(url='https://i.imgur.com/cVZUuzA.gif'),
+                ephemeral=True,
             )
             return False
         else:
