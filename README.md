@@ -6,8 +6,8 @@ All hands accepted
 ## Project structure
 
 ```
-/
-    lib/               # the project's logic
+tribalbot/
+    src/               # the project's logic
         bot/           # all the bot's components and setup logic
             cogs/      # all bot's cogs (extensions)
         orm/           # all database logic and interactions
@@ -33,16 +33,9 @@ The terminology of the bot and its commands should reflect a tribal style
 
 ## Development notes:
 
-The environmental file must be named `.env`. While the bot and logic will be written with a final backend
-database of MySQL almost all functionality will be available for SQLite as well. The only anticipated function 
-that will not work with SQLite is filtering tribes containing a given member:
-```py
-guild_id=9876543210
-member_id = 1234567890
-tribes = await Tribe.filter(members__contains=member, guild_config=guild_id)
-```
-If the that function is called on SQLite all tribes from the given guild_id will be returned instead of only those with the member, however this will work fine in MySQL and postgresql.
+The environmental file must be named `.env`. 
 
+The program is Database "agnostic" meaning it will work with either SQLite, PostgreSQL or MySQL. All you have to do is set up the database url in the `.env` file.
 
 ## Philosophy and cultural remarks
 
