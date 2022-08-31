@@ -19,6 +19,9 @@ tribalbot/
     main.py            # does final preparations and launches the bot
 ```
 
+## Table Schema
+![schema](tribalbot/static/database_diagram.png)
+
 ## Code Style
 
 The project uses a mixture of OOP and functional programing.

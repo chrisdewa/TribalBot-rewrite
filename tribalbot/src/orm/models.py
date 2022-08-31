@@ -40,13 +40,12 @@ class GuildConfig(Model):
         return self.__str__()
 
 
-class LogEntry(Model):
+class LogEntry(CreatedMixin, Model):
     """Log entry model for tribes.
     Contains a series of entries for "events" around tribes, for example, tribe creation, leadership change, etc.
     """
     tribe = fields.ForeignKeyField('models.Tribe', related_name='log_entries', on_delete=fields.CASCADE)
     text = fields.TextField()
-    created = fields.DatetimeField(auto_now_add=True)
     
     class Meta:
         table = 'log_entries'
