@@ -3,7 +3,7 @@ from tortoise.models import Model
 
 from functools import partial
 
-from lib.constants import DEFAULT_TRIBE_COLOR
+from ..constants import DEFAULT_TRIBE_COLOR
 
 from .mixins import *
 

@@ -12,9 +12,9 @@ from discord.app_commands import AppCommandError
 from discord.app_commands.errors import CommandNotFound
 # from discord import app_commands
 
-from lib.constants import guild_id, DEV_MODE
-from lib.orm.config import *
-from lib.utils.misc import separator
+from ..constants import guild_id, DEV_MODE
+from ..orm.config import *
+from ..utils.misc import separator
 
 _allowed_errors = (
     CommandNotFound,
@@ -71,7 +71,7 @@ class TribalBot(Bot):
     
     async def load_cogs(self):
         cogs = Path(__file__).parent / 'cogs' # absolute location of the cogs module
-        base_path = 'lib.bot.cogs.'
+        base_path = 'tribalbot.src.bot.cogs.'
         print('[!] Loading cogs')
         for cog in cogs.glob('*.py'): # iterate over the python files in the cogs directory
             if not cog.name.startswith('_'): # skip those starting with lower dash

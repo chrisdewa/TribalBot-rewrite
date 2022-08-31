@@ -1,7 +1,7 @@
 from discord.ext.commands import Cog
 from discord import app_commands, Interaction
 
-from lib.bot import TribalBot
+from ..bot import TribalBot
 
 
 class TestCog(Cog, description='Test commands'):

@@ -3,12 +3,12 @@ from typing import Optional
 from discord.ext.commands import Cog
 from discord import Interaction, app_commands
 
-from lib.bot import TribalBot
-from lib.orm.models import *
-from lib.controllers.tribes import *
-from lib.constants import DEFAULT_TRIBE_COLOR
-from lib.utils.checks import guild_has_leaders_role
-from lib.utils.views import ApplicationPaginatorView
+from ...bot import TribalBot
+from ...orm.models import *
+from ...controllers.tribes import *
+from ...constants import DEFAULT_TRIBE_COLOR
+from ...utils.checks import guild_has_leaders_role
+from ...utils.views import ApplicationPaginatorView
 
 class TribeCog(Cog, description='Cog for tribe commands'):
     def __init__(self, bot) -> None:

@@ -1,4 +1,4 @@
-from lib.errors import TribeBotBaseException
+from ..errors import TribeBotBaseException
 
 class TribeBotControllerError(TribeBotBaseException): pass
 

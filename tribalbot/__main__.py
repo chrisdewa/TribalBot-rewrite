@@ -1,5 +1,5 @@
-from lib.bot import TribalBot
-from lib.constants import BOT_TOKEN
+from .src.bot import TribalBot
+from .src.constants import BOT_TOKEN
 
 
 bot = TribalBot()

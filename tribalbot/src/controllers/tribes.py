@@ -4,8 +4,8 @@ from typing import Optional
 
 from discord import Guild, Member, app_commands, Interaction, Embed, Color
 
-from lib.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication, TribeMember
-from lib.constants import DATABASE_URL
+from ..orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication, TribeMember
+from ..constants import DATABASE_URL
 
 from .configs import get_guild_config
 from .errors import BadTribeCategory, InvalidMember

@@ -1,6 +1,6 @@
 from tortoise import Tortoise
 
-from lib.constants import DATABASE_URL
+from ..constants import DATABASE_URL
 
 __all__ = ['init_db', 'close_db']
 
@@ -8,7 +8,7 @@ TORTOISE_ORM = {
     "connections": {"default": DATABASE_URL},
     "apps": {
         "models": {
-            "models": [ "lib.orm.models", "aerich.models"],
+            "models": [ "tribalbot.src.orm.models", "aerich.models"],
             "default_connection": "default",
         },
     },

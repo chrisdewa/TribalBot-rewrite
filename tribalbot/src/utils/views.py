@@ -4,9 +4,9 @@ from functools import cached_property
 import discord
 from discord import ui, Interaction, Embed, Color, Member, Guild
 
-from lib.orm.models import Tribe, TribeJoinApplication
-from lib.controllers.tribes import accept_applicant
-from lib.controllers.errors import InvalidMember, BadTribeCategory
+from ..orm.models import Tribe, TribeJoinApplication
+from ..controllers.tribes import accept_applicant
+from ..controllers.errors import InvalidMember, BadTribeCategory
 
 
 class ApplicationPaginatorView(discord.ui.View):
