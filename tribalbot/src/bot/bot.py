@@ -12,9 +12,9 @@ from discord.app_commands import AppCommandError
 from discord.app_commands.errors import CommandNotFound
 # from discord import app_commands
 
-from ..constants import guild_id, DEV_MODE
-from ..orm.config import *
-from ..utils.misc import separator
+from tribalbot.src.constants import guild_id, DEV_MODE
+from tribalbot.src.orm.config import *
+from tribalbot.src.utils.misc import separator
 
 _allowed_errors = (
     CommandNotFound,

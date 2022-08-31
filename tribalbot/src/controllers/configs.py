@@ -1,6 +1,6 @@
 
 from discord import Guild, Role
-from ..orm.models import GuildConfig, TribeCategory
+from tribalbot.src.orm.models import GuildConfig, TribeCategory
 
 async def get_guild_config(guild: Guild) -> GuildConfig:
     guild_config, _ = await GuildConfig.get_or_create(guild_id=guild.id)

@@ -2,7 +2,7 @@ from discord.ext.commands import Cog
 from discord import app_commands, Interaction, permissions, Role
 
 from ..bot import TribalBot
-from ...controllers.configs import create_new_category, set_leaders_role
+from tribalbot.src.controllers.configs import create_new_category, set_leaders_role
 
 class ConfigurationsCog(Cog, description='Tribe and guild configuration commands'):
     def __init__(self, bot) -> None:

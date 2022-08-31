@@ -3,12 +3,13 @@ from typing import Optional
 from discord.ext.commands import Cog
 from discord import Interaction, app_commands
 
-from ...bot import TribalBot
-from ...orm.models import *
-from ...controllers.tribes import *
-from ...constants import DEFAULT_TRIBE_COLOR
-from ...utils.checks import guild_has_leaders_role
-from ...utils.views import ApplicationPaginatorView
+from ..bot import TribalBot
+from tribalbot.src.orm.models import *
+from tribalbot.src.controllers.tribes import *
+from tribalbot.src.constants import DEFAULT_TRIBE_COLOR
+from tribalbot.src.utils.checks import guild_has_leaders_role
+from tribalbot.src.utils.views import ApplicationPaginatorView, TribePaginatorView
+from tribalbot.src.utils.tribes import get_tribe_embed
 
 class TribeCog(Cog, description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
@@ -156,6 +157,19 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         
         view = ApplicationPaginatorView(applications, tribe, interaction.user)
         await interaction.response.send_message(embed=view.embeds[0], view=view, ephemeral=True)
+    
+    @app_commands.command(name='my-tribes', description='Shows you the tribes you are a part of')
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def my_tribes_cmd(
+        self, 
+        interaction: Interaction,
+    ):
+        
+        tribes = await get_all_member_tribes(interaction.user)
+        [await t.fetch_related("members") for t in tribes]
+        await TribePaginatorView.send_menu(interaction, tribes)
+        
         
         
 async def setup(bot: TribalBot):

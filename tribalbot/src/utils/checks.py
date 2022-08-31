@@ -1,6 +1,6 @@
 from discord import Interaction, app_commands, Embed, Color
 
-from ..controllers.configs import get_guild_config
+from tribalbot.src.controllers.configs import get_guild_config
 
 def is_chrisdewa():
     """Allows an app command to run only if the user is ChrisDewa#4552"""

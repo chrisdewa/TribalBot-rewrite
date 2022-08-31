@@ -4,19 +4,43 @@ from functools import cached_property
 import discord
 from discord import ui, Interaction, Embed, Color, Member, Guild
 
-from ..orm.models import Tribe, TribeJoinApplication
-from ..controllers.tribes import accept_applicant
-from ..controllers.errors import InvalidMember, BadTribeCategory
+from tribalbot.src.orm.models import Tribe, TribeJoinApplication
+from tribalbot.src.controllers.tribes import accept_applicant
+from tribalbot.src.controllers.errors import InvalidMember, BadTribeCategory
+from tribalbot.src.utils.tribes import get_tribe_embed
 
 
-class ApplicationPaginatorView(discord.ui.View):
-    def __init__(self, 
-                 applications: list[TribeJoinApplication], 
-                 tribe: Tribe,
-                 owner: Member, 
-                 head=0, 
-                 timeout=120
-                ):
+class DisableButtonsMixin:
+    async def disable_buttons(self, itr: Optional[Interaction] = None):
+        for child in self.children:
+            if isinstance(child, ui.Button):
+                child.disabled = True
+        if itr: 
+            await itr.response.edit_message(view=self)
+
+class BaseInteractionCheckMixin:
+    async def interaction_check(self, itr: Interaction) -> bool:
+        owner = getattr(self, 'owner', None)
+        if owner:
+            if itr.user == owner:
+                return True
+
+            await itr.response.send_message(
+                "This menu belongs to someone else", ephemeral=True
+            )
+            return False
+        
+        return True
+
+class ApplicationPaginatorView(BaseInteractionCheckMixin, DisableButtonsMixin, discord.ui.View):
+    def __init__(
+        self, 
+        applications: list[TribeJoinApplication], 
+        tribe: Tribe,
+        owner: Member, 
+        head=0, 
+        timeout=120
+    ):
         super().__init__(timeout=timeout)
         self.closed = False
         self.applications = applications
@@ -26,16 +50,6 @@ class ApplicationPaginatorView(discord.ui.View):
 
         self.invalid_applications = []
         
-        
-
-    async def interaction_check(self, itr: Interaction) -> bool:
-        if itr.user == self.owner:
-            return True
-
-        await itr.response.send_message(
-            "This menu belongs to someone else", ephemeral=True
-        )
-        return False
 
     @property
     def guild(self) -> Guild:
@@ -125,16 +139,67 @@ class ApplicationPaginatorView(discord.ui.View):
         await self.disable_buttons(itr)
         self.stop()        
     
-    async def disable_buttons(self, itr: Optional[Interaction] = None):
-        for button in self.children:
-            button: ui.Button
-            button.disabled = True
-        if itr: 
-            await itr.response.edit_message(view=self)
+    
+class TribePaginatorView(
+    BaseInteractionCheckMixin, 
+    DisableButtonsMixin, 
+    ui.View
+):
+    def __init__(
+        self, *, 
+        owner: Member, 
+        tribes: list[Tribe],
+        head=0, 
+        timeout: Optional[float] = 180
+    ):
+        super().__init__(timeout=timeout)
+        self.owner = owner
+        self.tribes = tribes
+        self.head = head
+    
+    @cached_property
+    def embeds(self) -> list[Embed]:
+        guild = self.owner.guild
+        return [
+            get_tribe_embed(tribe, guild)
+            for tribe in self.tribes
+        ]
+    
+    @property
+    def index(self) -> int:
+        return self.head % len(self.embeds)
+
+    @ui.button(custom_id="Back", emoji="◀️", row=0)
+    async def _back(self, itr: discord.Interaction, button: ui.Button):
+        self.head -= 1
+        await itr.response.edit_message(embed=self.embeds[self.index], view=self)
+    
+    
+    @ui.button(custom_id="Next", emoji="▶️", row=0)
+    async def _next(self, itr: discord.Interaction, button: ui.Button):
+        self.head += 1
+        await itr.response.edit_message(embed=self.embeds[self.index], view=self)
+    
+    @ui.button(custom_id="Close", emoji="❌", row=1)
+    async def _close(self, itr: discord.Interaction, _):
+        self.closed = True
+        await self.disable_buttons(itr)
+        self.stop()
+    
+    @classmethod
+    async def send_menu(cls, interaction: Interaction, tribes: list[Tribe]):
+        if len(tribes) > 1:
+            view = cls(owner=interaction.user, tribes=tribes)
+            await interaction.response.send_message(embed=view.embeds[0], view=view)
+        elif len(tribes) == 1:
+            await interaction.response.send_message(embed=get_tribe_embed(tribes.pop(), interaction.guild))
+        else:
+            await interaction.response.send_message('You are not part of any tribes yet', ephemeral=True)
+            
+        
+    
     
 
-    
-    
     
 
         

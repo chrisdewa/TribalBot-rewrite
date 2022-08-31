@@ -1,6 +1,6 @@
 from tortoise import Tortoise
 
-from ..constants import DATABASE_URL
+from tribalbot.src.constants import DATABASE_URL
 
 __all__ = ['init_db', 'close_db']
 
@@ -23,5 +23,5 @@ async def init_db():
     await Tortoise.generate_schemas()
 
 async def close_db():
-    print('[!] closing the database')
+    print('[-] closing the database')
     await Tortoise.close_connections() 

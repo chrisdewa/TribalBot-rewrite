@@ -4,8 +4,8 @@ from typing import Optional
 
 from discord import Guild, Member, app_commands, Interaction, Embed, Color
 
-from ..orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication, TribeMember
-from ..constants import DATABASE_URL
+from tribalbot.src.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication, TribeMember
+from tribalbot.src.constants import DATABASE_URL
 
 from .configs import get_guild_config
 from .errors import BadTribeCategory, InvalidMember
@@ -115,7 +115,7 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
 async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Autocomplete for guild tribes"""
     guild = interaction.guild
-    # guild_config = await get_guild_config(guild)
+
     tribes = await Tribe.filter(guild_config__guild_id=guild.id, name__startswith=current)
     return [
         app_commands.Choice(name=tribe.name, value=tribe.name)
@@ -126,8 +126,8 @@ async def autocomplete_manageable_tribes(interaction: Interaction, current: str)
     """Auto complete for tribes where the user is a leader or manager"""
     guild = interaction.guild
     user = interaction.user
-    coro1 = Tribe.filter(guild_config_id=guild.id, leader=user.id)
-    coro2 = Tribe.filter(guild_config_id=guild.id, manager=user.id)
+    coro1 = Tribe.filter(guild_config_id=guild.id, leader=user.id, name__istartswith=current)
+    coro2 = Tribe.filter(guild_config_id=guild.id, manager=user.id, name__istartswith=current)
     tribes = set(
         tribe for sublist in
         await asyncio.gather(coro1, coro2)
@@ -150,7 +150,7 @@ async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
     Returns:
         TribeCategory | None: Returns None if no tribe was found
     """
-    # guild_config = await get_guild_config(guild)
+
     return await TribeCategory.get_or_none(guild_config__guild_id=guild.id, name=name)
 
 
@@ -164,7 +164,7 @@ async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
     Returns:
         Tribe | None: the tribe if found
     """
-    # guild_config = await get_guild_config(guild)
+
     tribe = await Tribe.get_or_none(guild_config__guild_id=guild.id, name=name)
     return tribe
 
@@ -210,18 +210,6 @@ async def accept_applicant(applicant: Member, application: TribeJoinApplication)
     else:
         raise BadTribeCategory('Member is already a part of another tribe in this category')
 
-def get_tribe_embed(tribe: Tribe) -> Embed:
-    
-    embed = Embed(
-        title=tribe.name,
-        color=tribe.color,
-    )
-    if desc := tribe.banner.get('description'):
-        embed.description = desc
-    if img := tribe.banner.get('image'):
-        embed.set_image(url=img)
-    
-    return embed
 
 async def parse_tribe_members(tribe: Tribe, guild: Guild) -> set[Member]:
     """Returns a set of discord.Member from the tribe's members
