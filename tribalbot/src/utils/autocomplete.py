@@ -4,14 +4,15 @@ from discord import Interaction, app_commands
 from discord.app_commands import Choice
 
 from tribalbot.src.orm.models import TribeCategory, Tribe
+from .cache import cache_autocomplete
 
 __all__ = [
     'autocomplete_categories',
     'autocomplete_guild_tribes',
     'autocomplete_manageable_tribes',
-    
 ]
 
+@cache_autocomplete('categories')
 async def autocomplete_categories(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Autocomplete function for categories
     """
@@ -21,7 +22,7 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
         Choice(name=cat.name, value=cat.name)
         for cat in cats
     ]
-
+@cache_autocomplete('tribes')
 async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Autocomplete for guild tribes"""
     guild = interaction.guild
@@ -32,6 +33,7 @@ async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> l
         for tribe in tribes
     ]
 
+@cache_autocomplete('manageable-tribes', lambda i: (i.guild.id, i.user.id))
 async def autocomplete_manageable_tribes(interaction: Interaction, current: str) -> list[app_commands.Choice]:
     """Auto complete for tribes where the user is a leader or manager"""
     guild = interaction.guild
