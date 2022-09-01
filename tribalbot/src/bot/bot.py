@@ -15,6 +15,7 @@ from discord.app_commands.errors import CommandNotFound
 from tribalbot.src.constants import guild_id, DEV_MODE
 from tribalbot.src.orm.config import *
 from tribalbot.src.utils.misc import separator
+from tribalbot.src.utils.cache import clear_autocomplete_cache
 
 _allowed_errors = (
     CommandNotFound,
@@ -48,6 +49,8 @@ class TribalBot(Bot):
     async def setup_hook(self) -> None:
         await init_db()
         await self.load_cogs()
+        
+        await clear_autocomplete_cache.start()
         
         if DEV_MODE:
             guild = discord.Object(id=guild_id)
