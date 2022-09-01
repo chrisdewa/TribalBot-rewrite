@@ -9,7 +9,7 @@ from tribalbot.src.controllers.tribes import *
 from tribalbot.src.constants import DEFAULT_TRIBE_COLOR
 from tribalbot.src.utils.checks import guild_has_leaders_role
 from tribalbot.src.utils.views import ApplicationPaginatorView, TribePaginatorView
-from tribalbot.src.utils.tribes import get_tribe_embed
+from tribalbot.src.utils.autocomplete import *
 
 class TribeCog(Cog, description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
