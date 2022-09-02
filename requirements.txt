@@ -2,3 +2,4 @@ discord.py==2.0.0
 tortoise-orm==0.19.2
 aerich==0.6.3
 python-dotenv==0.20.0
+validators==0.20.0

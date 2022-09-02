@@ -32,7 +32,59 @@ class BaseInteractionCheckMixin:
         
         return True
 
-class ApplicationPaginatorView(BaseInteractionCheckMixin, DisableButtonsMixin, discord.ui.View):
+
+
+class TribeBannerConfimationView(BaseInteractionCheckMixin, DisableButtonsMixin, ui.View):
+    def __init__(
+        self, 
+        tribe: Tribe, 
+        owner: Member, 
+        color: Optional[int] = None,
+        description: Optional[str] = None,
+        image: Optional[str] = None,
+        timeout=120
+    ) -> None:
+        super().__init__(timeout=timeout)
+        self.tribe = tribe
+        self.color = color
+        self.description = description
+        self.image = image
+        self.owner = owner
+        self.confirmed = False
+    
+    @cached_property
+    def banner_embed(self) -> Embed:
+        embed = Embed(title=self.tribe.name)
+        
+        if self.description:
+            embed.description = self.description
+        if self.image:
+            embed.set_image(url=self.image)
+            embed.set_footer(
+                text='If the image  does not display correctly '
+                     'check that the image url directs to an actual '
+                     'image, not a website with an image (imgur)'
+            )
+        if self.color:
+            embed.colour = self.color
+        
+        return embed
+    
+    @ui.button(custom_id="confirm", label='Confirm', style=discord.ButtonStyle.green)
+    async def confirm_btn(self, interaction: Interaction, btn: ui.Button):
+        self.confirmed = True
+        await self.disable_buttons()
+        
+        self.stop()
+
+    @ui.button(custom_id="cancel", label='Cancel', style=discord.ButtonStyle.red)
+    async def cancel_btn(self, interaction: Interaction, btn: ui.Button):
+        await self.disable_buttons()
+        
+        self.stop()
+        
+
+class ApplicationPaginatorView(BaseInteractionCheckMixin, DisableButtonsMixin, ui.View):
     def __init__(
         self, 
         applications: list[TribeJoinApplication], 

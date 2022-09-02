@@ -2,13 +2,20 @@ from typing import Optional
 
 from discord.ext.commands import Cog
 from discord import Interaction, app_commands
+from discord.app_commands import Range
+
+import validators.url as validate_url
 
 from ..bot import TribalBot
 from tribalbot.src.orm.models import *
 from tribalbot.src.controllers.tribes import *
 from tribalbot.src.constants import DEFAULT_TRIBE_COLOR
 from tribalbot.src.utils.checks import guild_has_leaders_role
-from tribalbot.src.utils.views import ApplicationPaginatorView, TribePaginatorView
+from tribalbot.src.utils.views import (
+    ApplicationPaginatorView, 
+    TribePaginatorView, 
+    TribeBannerConfimationView
+)
 from tribalbot.src.utils.autocomplete import *
 
 class TribeCog(Cog, description='Cog for tribe commands'):
@@ -37,8 +44,8 @@ class TribeCog(Cog, description='Cog for tribe commands'):
     @guild_has_leaders_role()
     async def tribe_create_cmd(self, 
                                interaction: Interaction,
-                               name: app_commands.Range[str, 5, 30],
-                               color: app_commands.Range[int, 0, 16777215] = DEFAULT_TRIBE_COLOR,
+                               name: Range[str, 5, 30],
+                               color: Range[int, 0, 16777215] = DEFAULT_TRIBE_COLOR,
                                category: Optional[str] = None):
         kw = {
             'guild': interaction.guild, 
@@ -114,14 +121,16 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         
         for u in (leader, manager): # we notify at least the tribe leader, but also the manager if it exists
             if u:
-                await u.send(embed=Embed(
-                    title='New Tribe Join Application',
-                    description=f'**Server:** {guild.name}\n'
-                                f'**Tribe:** {tribe.name}\n'
-                                f'**Applicant:** {applicant}\n'
-                                f'**Date:** of application: {application.pretty_dt}',
-                    color=Color.random()
-                ))
+                await u.send(
+                    embed=Embed(
+                        title='New Tribe Join Application',
+                        description=f'**Server:** {guild.name}\n'
+                                    f'**Tribe:** {tribe.name}\n'
+                                    f'**Applicant:** {applicant}\n'
+                                    f'**Date:** of application: {application.pretty_dt}',
+                        color=Color.random()
+                    ).set_footer(text='Review applications from the server using /tribe-applications')
+                )
 
         return await interaction.response.send_message(
             f"Done! you've created an application to enter \"{name}\", the tribe has been notified.",
@@ -161,17 +170,80 @@ class TribeCog(Cog, description='Cog for tribe commands'):
     @app_commands.command(name='my-tribes', description='Shows you the tribes you are a part of')
     @app_commands.guild_only()
     @guild_has_leaders_role()
-    async def my_tribes_cmd(
-        self, 
-        interaction: Interaction,
-    ):
+    async def my_tribes_cmd(self, interaction: Interaction):
         
         tribes = await get_all_member_tribes(interaction.user)
         [await t.fetch_related("members") for t in tribes]
         await TribePaginatorView.send_menu(interaction, tribes)
         
+    @app_commands.command(name='set-banner', description="Sets your tribe's banner")
+    @app_commands.describe(name='The name of the target tribe')
+    @app_commands.autocomplete(name=autocomplete_manageable_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def set_tribe_banner_cmd(
+        self,
+        interaction: Interaction,
+        name: str,
+        color: Range[int, 0, 16777215] = None,
+        description: Range[str, 0, 2000] = None,
+        image: Optional[str] = None,
+    ):
+        if not any((color, description, image)):
+            return await interaction.response.send_message(
+                'You must select any of "color", "description" or "image"',
+                ephemeral=True
+            )
         
+        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
+        if not tribe:
+            return await interaction.response.send_message(
+                f'There\'s no tribe with the name "{name}"',
+                ephemeral=True
+            )
+            
+        if interaction.user.id not in tribe.staff:
+            return await interaction.response.send_message(
+                'You cannot manage this tribe',
+                ephemeral=True
+            )
         
+        banner = tribe.banner
+        if color:
+            banner['color'] = color
+        if description: 
+            banner['description'] = description
+        if image:
+            if validate_url(image):
+                banner['image'] = image
+            else:
+                return await interaction.response.send_message(
+                    content="Your image url is invalid, please corroborate it. "
+                            "Also make sure that the url directs to an actual "
+                            "image and not a website that contains an image like imgur or tenor",
+                    ephemeral=True
+                )
+        
+        view = TribeBannerConfimationView(tribe, interaction.user, **banner)
+        
+        await interaction.response.send_message(
+            content='Please review the tribe banner and confirm or cancel the changes', 
+            embed=view.banner_embed,
+            view=view, 
+            ephemeral=True
+        )
+        
+        await view.wait()
+        if view.confirmed:
+            tribe.color = color
+            banner.pop('color', None)
+            tribe.banner = banner
+            await tribe.save()
+            await interaction.followup.send('Done! changes applied', embed=None, view=view, ephemeral=True)
+        else:
+            await interaction.followup.send('Changes cancelled', embed=None, view=view, ephemeral=True)
+
+         
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))
         
