@@ -50,12 +50,11 @@ class TribalBot(Bot):
         await init_db()
         await self.load_cogs()
         
-        await clear_autocomplete_cache.start()
+        clear_autocomplete_cache.start()
         
         if DEV_MODE:
             guild = discord.Object(id=guild_id)
             self.tree.copy_global_to(guild=guild)
-            
             await self.tree.sync(guild=guild)
     
     async def __aexit__(self, *_, **__) -> None: # we're not using any args or kwargs

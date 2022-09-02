@@ -17,12 +17,11 @@ class CacheEntry:
     
     @property
     def is_expired(self) -> bool:
-        return self.dt + timedelta(minutes=2) > datetime.utcnow()
+        return self.dt + timedelta(minutes=2) < datetime.utcnow()
 
 
 autocomplete_global_cache = {}
 
-# TODO: make a looping task to delete expired cache entries
 @tasks.loop(seconds=60)
 async def clear_autocomplete_cache():
     for name in autocomplete_global_cache:
@@ -30,7 +29,7 @@ async def clear_autocomplete_cache():
             v: CacheEntry
             if v.is_expired:
                 del autocomplete_global_cache[name][k]
-
+    
 def cache_autocomplete(name: str, keyf: Callable[[Interaction], Hashable] = lambda i: i.guild.id):
     """decorator for autocomplete functions that make calls to the database
 
@@ -46,7 +45,7 @@ def cache_autocomplete(name: str, keyf: Callable[[Interaction], Hashable] = lamb
             key = keyf(interaction)
             
             cache: CacheEntry = autocomplete_global_cache.setdefault(name, {}).setdefault(key, CacheEntry())
-            if cache.result and cache.is_expired:
+            if cache.result and not cache.is_expired:
                 return cache.result
             else:
                 result = await coro(interaction, current)
