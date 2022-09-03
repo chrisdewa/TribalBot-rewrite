@@ -7,20 +7,15 @@ All hands accepted
 
 ```
 tribalbot/
-    src/               # the project's logic
-        bot/           # all the bot's components and setup logic
-            cogs/      # all bot's cogs (extensions)
-        orm/           # all database logic and interactions
-            models.py  # each model represents a table. 
-                       # each model should be a single file but imported 
-                       # on the folder's __init__.py
-        controllers/   # Contains code that communicates the database with the commands
-        utils/         # contains helper code
-    main.py            # does final preparations and launches the bot
+    src/               => the project's logic
+        bot/           => all the bot's components and setup logic
+            cogs/      => all bot's cogs (extensions)
+        orm/           => all database logic and interactions
+            models.py  => each model represents a table. 
+        controllers/   => Contains code that communicates the database with the commands
+        utils/         => contains additional code like views, autocompletes and helpers
+    __main__.py        => does final preparations and launches the bot
 ```
-
-## Table Schema
-![schema](tribalbot/static/database_diagram.png)
 
 ## Code Style
 
@@ -36,9 +31,21 @@ The terminology of the bot and its commands should reflect a tribal style
 
 ## Development notes:
 
-The environmental file must be named `.env`. 
+The code for the bot is organized into a module `tribalbot`
+The bot depends on the following environmental variables: 
+    - `DATABASE_URL` => the url for the database connection, 
+                        must include the user and password (except sqlite)
+    - `BOT_TOKEN`    => the discord token for the bot
 
-The program is Database "agnostic" meaning it will work with either SQLite, PostgreSQL or MySQL. All you have to do is set up the database url in the `.env` file.
+When the program starts it will look for an `.env` file at the project's root, you can put the environmental variables there. 
+
+### Database
+
+The program is Database "agnostic" meaning it will work with either SQLite, PostgreSQL or MySQL. 
+
+#### Schema
+
+![schema](tribalbot/static/database_diagram.png)
 
 ## Philosophy and cultural remarks
 
