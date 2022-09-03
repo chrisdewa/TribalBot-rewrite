@@ -1,6 +1,7 @@
 from discord import Embed, Color, Member, Guild
 
 from tribalbot.src.orm.models import Tribe
+from tribalbot.src.utils.misc import contains_urls
 
 def get_tribe_embed(tribe: Tribe, guild: Guild) -> Embed:
     """Outputs an embed describing the tribe and its members"""
@@ -34,6 +35,10 @@ def tribe_banner(tribe: Tribe, guild: Guild):
         color=tribe.color,
         description=tribe.banner.get('description') or 'description empty'
     )
+    
+    if contains_urls(embed.description) and tribe.guild_config.urls is False:
+        embed.description = 'Guild Settings disallow urls which the banner description contains. Talk to the server admins.'
+    
     if image := tribe.banner.get('image'):
         embed.set_image(url=image)
     

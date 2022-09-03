@@ -2,7 +2,7 @@ from discord.ext.commands import Cog
 from discord import app_commands, Interaction, permissions, Role
 
 from ..bot import TribalBot
-from tribalbot.src.controllers.configs import create_new_category, set_leaders_role
+from tribalbot.src.controllers.configs import create_new_category, get_guild_config, set_leaders_role
 
 class ConfigurationsCog(Cog, description='Tribe and guild configuration commands'):
     def __init__(self, bot) -> None:
@@ -36,7 +36,26 @@ class ConfigurationsCog(Cog, description='Tribe and guild configuration commands
     ):
         cat = await create_new_category(itr.guild, name=name)
         await itr.response.send_message(f'The category "{name}" was successfully created with id {cat.pk}', ephemeral=True)
-
+    
+    @app_commands.command(name='banner-url', description='Allows or disallows tribe banners with URLs')
+    @app_commands.describe(setting='If True tribes can put URLs in their banners, incluing invites, the contrary if False')
+    @app_commands.guild_only()
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def banner_url_policy(
+        self,
+        itr: Interaction,
+        setting: bool
+    ):
+        config = await get_guild_config(itr.guild)
+        config.urls = setting
+        await config.save()
+        if setting:
+            msg = 'Done! Tribes can put URLs in their banners'
+        else:
+            msg = 'Done! Tribes cannot put URLs in their banners'
+        
+        await itr.response.send_message(msg, ephemeral=True)
+    
 async def setup(bot: TribalBot):
     await bot.add_cog(ConfigurationsCog(bot))
         

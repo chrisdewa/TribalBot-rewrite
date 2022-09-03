@@ -261,7 +261,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 f'There\'s no tribe with the name "{name}"',
                 ephemeral=True
             )
-        await tribe.fetch_related('members')
+        await tribe.fetch_related('members', 'guild_config')
         embed = tribe_banner(tribe, interaction.guild)
         await interaction.response.send_message(embed=embed)
         
