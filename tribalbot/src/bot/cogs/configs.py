@@ -12,11 +12,11 @@ class ConfigurationsCog(Cog, description='Tribe and guild configuration commands
     async def cog_unload(self) -> None:
         print(f'[-] {self.qualified_name} unloaded')
     
-    @app_commands.command(name='select-leaders-role', description='Selects the leaders role. [Caution] Overwrites previous setting.')
+    @app_commands.command(name='set-leaders-role', description='Selects the leaders role. [Caution] Overwrites previous setting.')
     @app_commands.describe(role='The role to be assigned to all tribe leaders')
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True, manage_roles=True)
-    async def select_leaders_role(
+    async def set_leaders_role_cmd(
         self,
         itr: Interaction,
         role: Role,

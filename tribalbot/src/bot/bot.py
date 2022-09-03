@@ -28,11 +28,12 @@ class TribalBot(Bot):
         intents.members = True
         intents.typing = False
         
-        super().__init__(*args, 
-                         command_prefix='?', 
-                         intents=intents,
-                         **options
-                         )
+        super().__init__(
+            *args, 
+            command_prefix='?', 
+            intents=intents,
+            **options
+        )
         tree = self.tree
         
         #@tree.error
