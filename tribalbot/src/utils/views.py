@@ -51,6 +51,7 @@ class TribeBannerConfimationView(BaseInteractionCheckMixin, DisableButtonsMixin,
         self.image = image
         self.owner = owner
         self.confirmed = False
+        self.itn = None
     
     @cached_property
     def banner_embed(self) -> Embed:
@@ -74,13 +75,13 @@ class TribeBannerConfimationView(BaseInteractionCheckMixin, DisableButtonsMixin,
     async def confirm_btn(self, interaction: Interaction, btn: ui.Button):
         self.confirmed = True
         await self.disable_buttons()
-        
+        self.itn = interaction
         self.stop()
 
     @ui.button(custom_id="cancel", label='Cancel', style=discord.ButtonStyle.red)
     async def cancel_btn(self, interaction: Interaction, btn: ui.Button):
         await self.disable_buttons()
-        
+        self.itn = interaction        
         self.stop()
         
 

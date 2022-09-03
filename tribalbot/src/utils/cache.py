@@ -24,11 +24,14 @@ autocomplete_global_cache = {}
 
 @tasks.loop(seconds=60)
 async def clear_autocomplete_cache():
+    to_del = []
     for name in autocomplete_global_cache:
         for k, v in autocomplete_global_cache[name].items():
             v: CacheEntry
             if v.is_expired:
-                del autocomplete_global_cache[name][k]
+                to_del.append((name, k))
+    for k1,k2 in to_del:
+        del autocomplete_global_cache[k1][k2]
     
 def cache_autocomplete(name: str, keyf: Callable[[Interaction], Hashable] = lambda i: i.guild.id):
     """decorator for autocomplete functions that make calls to the database

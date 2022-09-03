@@ -6,6 +6,8 @@ from discord.app_commands import Range
 
 import validators.url as validate_url
 
+from tribalbot.src.utils.tribes import tribe_banner
+
 from ..bot import TribalBot
 from tribalbot.src.orm.models import *
 from tribalbot.src.controllers.tribes import *
@@ -239,11 +241,31 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             banner.pop('color', None)
             tribe.banner = banner
             await tribe.save()
-            await interaction.followup.send('Done! changes applied', embed=None, view=view, ephemeral=True)
+            await view.itn.response.edit_message(content='Done! changes applied', embed=None, view=view)
         else:
-            await interaction.followup.send('Changes cancelled', embed=None, view=view, ephemeral=True)
+            await view.itn.response.edit_message(content='Changes cancelled', embed=None, view=view)
 
-         
+    @app_commands.command(name='banner', description="Displays a tribe banner")
+    @app_commands.describe(name='The name of the target tribe')
+    @app_commands.autocomplete(name=autocomplete_manageable_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def display_banner_cmd(
+        self,
+        interaction: Interaction,
+        name: str,
+    ):
+        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
+        if not tribe:
+            return await interaction.response.send_message(
+                f'There\'s no tribe with the name "{name}"',
+                ephemeral=True
+            )
+        await tribe.fetch_related('members')
+        embed = tribe_banner(tribe, interaction.guild)
+        await interaction.response.send_message(embed=embed)
+        
+    
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))
         
