@@ -109,7 +109,6 @@ async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
     Returns:
         TribeCategory | None: Returns None if no tribe was found
     """
-
     return await TribeCategory.get_or_none(guild_config_id=guild.id, name=name)
 
 

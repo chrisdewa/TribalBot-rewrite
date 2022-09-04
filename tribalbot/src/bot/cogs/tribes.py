@@ -76,7 +76,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             'leader': interaction.user,
         }
         if category:
-            cat = await get_tribe_category(interaction.guild, name)
+            cat = await get_tribe_category(interaction.guild, category)
             if not cat:
                 return await interaction.response.send_message(
                     f'There\'s no category with name "{category}", try a different category',
@@ -303,6 +303,13 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             ephemeral=True
         )
 
+    # @app_commands.command(name='', description="")
+    # @app_commands.describe()
+    # @app_commands.autocomplete()
+    # @app_commands.guild_only()
+    # @guild_has_leaders_role()
+    # def _():
+    #     pass
     
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))

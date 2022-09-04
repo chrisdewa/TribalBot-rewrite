@@ -8,12 +8,13 @@ from discord import Interaction
 from discord.app_commands import Choice
 from discord.ext import tasks
 
+from tortoise.models import Model
 
 # TODO: change for named tuple
 class CacheEntry:
-    def __init__(self, result: list[Any] | None = None): 
+    def __init__(self, result: set[Model] | None = None): 
         self.dt = datetime.utcnow()
-        self.result = result or []
+        self.result = result or set()
     
     @property
     def is_expired(self) -> bool:
@@ -33,14 +34,25 @@ async def clear_autocomplete_cache():
     for k1,k2 in to_del:
         del autocomplete_global_cache[k1][k2]
     
-def cache_autocomplete(name: str, keyf: Callable[[Interaction], Hashable] = lambda i: i.guild.id):
+def cached_model_autocomplete(
+    name: str, 
+    choice_factory: Callable[[set[Model]], list[Choice]],
+    *,
+    filter_by: str = 'name',
+    keyf: Callable[[Interaction], Hashable] = lambda i: i.guild.id
+):
     """decorator for autocomplete functions that make calls to the database
 
     Args:
         name (str): name under which the function will be cached
+        choice_factory (callable -> list[Choice]): a callable that outputs the actual list of choices
+        filter_by (str): the attribute name to filter by the data
+            It will be compared to the current autocomplete value
         keyf (callable -> hashable): 
             a function that takes a single argument (interaction) and returns a hashable 
             to store the returned result
+    Decorates:
+        A coroutine that returns a set of Model types (like Tribe)
     """
     def wrapper(coro):
         @wraps(coro)
@@ -49,10 +61,15 @@ def cache_autocomplete(name: str, keyf: Callable[[Interaction], Hashable] = lamb
             
             cache: CacheEntry = autocomplete_global_cache.setdefault(name, {}).setdefault(key, CacheEntry())
             if cache.result and not cache.is_expired:
-                return cache.result
+                data =  cache.result
             else:
-                result = await coro(interaction, current)
-                autocomplete_global_cache[name][key] = CacheEntry(result)
-                return result
+                data = await coro(interaction, current)
+                autocomplete_global_cache[name][key] = CacheEntry(data)
+                
+            return choice_factory({
+                item for item in data
+                if getattr(item, filter_by, '').startswith(current)
+            })
+            
         return inner
     return wrapper
