@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from discord.ext.commands import Cog
 from discord import Interaction, app_commands
@@ -20,6 +20,28 @@ from tribalbot.src.utils.views import (
 )
 from tribalbot.src.utils.autocomplete import *
 
+async def get_tribe(interaction: Interaction, tribe_name) -> Tribe | None:
+    """Returns the tribe or handles the response to the user in case it doesn't exist"""
+    tribe = await get_tribe_by_name(interaction.guild, tribe_name)
+    if not tribe:
+        return await interaction.response.send_message(
+            f'There\'s no tribe with the name "{tribe_name}"',
+            ephemeral=True
+        )
+    else:
+        return tribe
+
+async def can_manage_tribe(interaction: Interaction, tribe: Tribe) -> Literal[True] | None:
+    """Returns True if the interaction.user can manage the tribe and handles the response if they can't"""
+    mid = interaction.user.id
+    if mid not in tribe.staff:
+        return await interaction.response.send_message(
+            'You cannot manage this tribe',
+            ephemeral=True
+        )
+    else:
+        return True
+        
 class TribeCog(Cog, description='Cog for tribe commands'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
@@ -32,8 +54,6 @@ class TribeCog(Cog, description='Cog for tribe commands'):
     @app_commands.guild_only()
     async def tribe_list(self, interaction: Interaction):
         tribes = await get_all_guild_tribes(interaction.guild)
-        
-        
         
         await interaction.response.send_message(f'Server tribes: {tribes}')
     
@@ -94,12 +114,9 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         interaction: Interaction,
         name: str,
     ):
-        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
-        if not tribe:
-            return await interaction.response.send_message(
-                f'There\'s no tribe with the name "{name}"',
-                ephemeral=True
-            )
+        tribe = await get_tribe(interaction, name)
+        if not tribe: return # get_tribe will notify by itself it the tribe is not existent
+        
         tribes = await get_all_member_tribes(interaction.user)
         if tribe in tribes:
             return await interaction.response.send_message(
@@ -150,19 +167,9 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         name: str,
     ):
         
-        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
-        if not tribe:
-            return await interaction.response.send_message(
-                f'There\'s no tribe with the name "{name}"',
-                ephemeral=True
-            )
-            
-        
-        if interaction.user.id not in tribe.staff:
-            return await interaction.response.send_message(
-                'You cannot manage this tribe',
-                ephemeral=True
-            )
+        tribe = await get_tribe(interaction, name)
+        if not tribe or not await can_manage_tribe(interaction, tribe): 
+            return
         
         applications = await get_tribe_applications(tribe)
         
@@ -197,18 +204,9 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 ephemeral=True
             )
         
-        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
-        if not tribe:
-            return await interaction.response.send_message(
-                f'There\'s no tribe with the name "{name}"',
-                ephemeral=True
-            )
-            
-        if interaction.user.id not in tribe.staff:
-            return await interaction.response.send_message(
-                'You cannot manage this tribe',
-                ephemeral=True
-            )
+        tribe = await get_tribe(interaction, name)
+        if not tribe or not await can_manage_tribe(interaction, tribe): 
+            return
         
         banner = tribe.banner
         if color:
@@ -247,7 +245,7 @@ class TribeCog(Cog, description='Cog for tribe commands'):
 
     @app_commands.command(name='banner', description="Displays a tribe banner")
     @app_commands.describe(name='The name of the target tribe')
-    @app_commands.autocomplete(name=autocomplete_manageable_tribes)
+    @app_commands.autocomplete(name=autocomplete_guild_tribes)
     @app_commands.guild_only()
     @guild_has_leaders_role()
     async def display_banner_cmd(
@@ -255,16 +253,56 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         interaction: Interaction,
         name: str,
     ):
-        tribe = await get_tribe_by_name(interaction.guild, name) # get the tribe the user wants
-        if not tribe:
-            return await interaction.response.send_message(
-                f'There\'s no tribe with the name "{name}"',
-                ephemeral=True
-            )
+        tribe = await get_tribe(interaction, name)
+        if not tribe: return
+        
         await tribe.fetch_related('members', 'guild_config')
         embed = tribe_banner(tribe, interaction.guild)
         await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command(name='tribe-kick', description="Kicks a member out of the tribe")
+    @app_commands.describe(name='The name of the target tribe', member='The member to kick')
+    @app_commands.autocomplete(name=autocomplete_manageable_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def tribe_kick_cmd(
+        self,
+        interaction: Interaction,
+        name: str,
+        member: Member
+    ):
+        tribe = await get_tribe(interaction, name)
+        if not tribe or not await can_manage_tribe(interaction, tribe): 
+            return
+
+        await tribe.fetch_related('members')
         
+        if member.id == interaction.user.id:
+            return await interaction.response.send_message(
+                "Don't kick yourself out, just exit the tribe...",
+                ephemeral=True
+            )
+        elif member.id not in [m.member_id for m in tribe.members]:
+            return await interaction.response.send_message(
+                f'{member.mention} is not a part of this tribe',
+                ephemeral=True
+            )
+        
+        
+        for m in tribe.members:
+            if m.member_id == member.id:
+                await m.delete()
+                break
+        if member.id == tribe.manager:
+            tribe.manager = None
+        
+        await tribe.save()
+        
+        await interaction.response.send_message(
+            f'Done! {member.mention} has been kicked out the tribe',
+            ephemeral=True
+        )
+
     
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))

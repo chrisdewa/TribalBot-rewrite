@@ -110,7 +110,7 @@ async def get_tribe_category(guild: Guild, name: str) -> TribeCategory | None:
         TribeCategory | None: Returns None if no tribe was found
     """
 
-    return await TribeCategory.get_or_none(guild_config__guild_id=guild.id, name=name)
+    return await TribeCategory.get_or_none(guild_config_id=guild.id, name=name)
 
 
 async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
@@ -124,7 +124,7 @@ async def get_tribe_by_name(guild: Guild, name: str) -> Tribe | None:
         Tribe | None: the tribe if found
     """
 
-    tribe = await Tribe.get_or_none(guild_config__guild_id=guild.id, name=name)
+    tribe = await Tribe.get_or_none(guild_config_id=guild.id, name=name)
     return tribe
 
 async def get_member_categories(member: Member) -> set[TribeCategory]:
