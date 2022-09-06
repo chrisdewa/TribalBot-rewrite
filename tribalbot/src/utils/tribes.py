@@ -1,6 +1,7 @@
+
 from discord import Embed, Color, Member, Guild
 
-from tribalbot.src.orm.models import Tribe
+from tribalbot.src.orm.models import Tribe, TribeMember
 from tribalbot.src.utils.misc import contains_urls
 
 def get_tribe_embed(tribe: Tribe, guild: Guild) -> Embed:
@@ -57,4 +58,25 @@ def tribe_banner(tribe: Tribe, guild: Guild):
     
     return embed
     
+
+class TribeMemberCollection:
+    def __init__(self, members: list[TribeMember]):
+        self.__members = members
+    
+    @property
+    def ids(self) -> list[int]:
+        """returns a list with the member ids"""
+        return [member.member_id for member in self.__members]
+
+    async def remove_member(self, member_id: int):
+        """deletes a TribeMember that is part of this collection from the database"""
+        if not member_id in self.ids:
+            raise ValueError(f'member with id "{member_id}" not a part of this collection')
+
+        index = self.ids.index(member_id)
+        member = self.__members.pop(index)
+        
+        await member.delete()
+        
+        
         

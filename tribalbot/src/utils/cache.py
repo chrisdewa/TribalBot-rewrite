@@ -56,7 +56,7 @@ def cached_model_autocomplete(
     """
     def wrapper(coro):
         @wraps(coro)
-        async def inner(interaction: Interaction, current: str) -> list[Choice]:
+        async def autocomplete(interaction: Interaction, current: str) -> list[Choice]:
             key = keyf(interaction)
             
             cache: CacheEntry = autocomplete_global_cache.setdefault(name, {}).setdefault(key, CacheEntry())
@@ -71,5 +71,5 @@ def cached_model_autocomplete(
                 if getattr(item, filter_by, '').startswith(current)
             })
             
-        return inner
+        return autocomplete
     return wrapper

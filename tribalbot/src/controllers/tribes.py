@@ -1,11 +1,13 @@
 
 import asyncio
+import random
 from typing import Optional
 
 from discord import Guild, Member, app_commands, Interaction, Embed, Color
 
 from tribalbot.src.orm.models import LogEntry, Tribe, TribeCategory, TribeJoinApplication, TribeMember
 from tribalbot.src.constants import DATABASE_URL
+from tribalbot.src.utils.tribes import TribeMemberCollection
 
 from .configs import get_guild_config
 from .errors import BadTribeCategory, InvalidMember
@@ -189,4 +191,53 @@ async def prune_tribe_members(tribe: Tribe, guild: Guild) -> set[int]:
     await asyncio.gather(*to_prune)
     return prunned
     
+
+async def handle_leader_leave(tribe: Tribe, *, members: TribeMemberCollection | None = None, new_leader: int | None = None) -> bool:
+    """This handles a tribe leader that is leaving the tribe
+    Works if the leader was forced to leave by an admin or 
+    if the leader exits the tribe without disbanding or 
+    appointing a successor
+    
+    Args:
+        tribe (Tribe): the target tribe
+        members (TribeMembersCollection | None): a collection of the tribe members if any
+        new_leader (int | None): an optional new leader id
+            - if the new_leader id is a member from the tribe 
+                it will be removed as a member
+            - if not supplied the manager will take the charge of leader
+            - if there's no manager, a new leader will be randomly selected
+                from the tribes members
+            - if there's no members left the tribe is deleted
+    Returns:
+        bool:
+            True: if the tribe still exists
+            False: if the tribe was deleted
+    """
+    members = members or TribeMemberCollection(await tribe.members)
+    if new_leader:
+        if new_leader in members.ids: # the new leader is part of the tribe members
+            await members.remove_member(new_leader) # we first remove the leader from the members
+            if new_leader == tribe.manager:
+                tribe.manager = None
+                
+    else:
+        if members.ids: # there are members in this tribe
+            if tribe.manager: # there's a manager so let's pick them
+                new_leader = tribe.manager
+                tribe.manager = None
+                await members.remove_member(new_leader)
+            else: # there isn't a manager so let's pick at random from the tribe members
+                new_leader = random.choice(members.ids)
+                await members.remove_member(new_leader)
+            
+        else: # there are no more users in this tribe, we delete it and return None
+            await tribe.delete()
+            return False
         
+    # if we haven't returned then we have a new leader 
+    tribe.leader = new_leader
+    await tribe.save() # all other changes have already been made
+    
+    return True    
+
+    

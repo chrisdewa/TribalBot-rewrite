@@ -5,6 +5,7 @@ from discord import Interaction, app_commands
 from discord.app_commands import Range
 
 import validators.url as validate_url
+from tribalbot.src.utils.autocomplete import autocomplete_leader_tribes
 
 from tribalbot.src.utils.tribes import tribe_banner
 
@@ -12,6 +13,7 @@ from ..bot import TribalBot
 from tribalbot.src.orm.models import *
 from tribalbot.src.controllers.tribes import *
 from tribalbot.src.constants import DEFAULT_TRIBE_COLOR
+from tribalbot.src.utils.tribes import TribeMemberCollection
 from tribalbot.src.utils.checks import guild_has_leaders_role
 from tribalbot.src.utils.views import (
     ApplicationPaginatorView, 
@@ -303,13 +305,83 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             ephemeral=True
         )
 
-    # @app_commands.command(name='', description="")
-    # @app_commands.describe()
-    # @app_commands.autocomplete()
-    # @app_commands.guild_only()
-    # @guild_has_leaders_role()
-    # def _():
-    #     pass
+    @app_commands.command(name='tribe-exit', description="Exits the target tribe")
+    @app_commands.describe(name='The name of the tribe')
+    @app_commands.autocomplete(name=autocomplete_user_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def exit_tribe_command(
+        self, 
+        interaction: Interaction,
+        name: str
+    ):
+        member = interaction.user
+        tribe = await get_tribe(interaction, name)
+        if not tribe: return 
+        tribe_members = TribeMemberCollection(await tribe.members)
+        
+        if member.id == tribe.leader:
+            await handle_leader_leave(tribe, members=tribe_members) # handle leader exiting tribe
+        elif member.id in tribe_members.ids:
+            await tribe_members.remove_member(member.id)
+            if member.id == tribe.manager:
+                tribe.manager = None
+        else:
+            return await interaction.response.send_message(
+                f"You are not a part of **{tribe.name}**",
+                ephemeral=True
+            )
+        await tribe.save()
+        await interaction.response.send_message(
+                f"Done! You are no longer a part of **{tribe.name}**",
+                ephemeral=True
+            )
+        
+    @app_commands.command(name='tribe-set-manager', description="Appoints the manager of the tribe. You must be a leader to use this.")
+    @app_commands.describe(name='the name of a tribe you are a leader of', member='The manager to appoint')
+    @app_commands.autocomplete(name=autocomplete_leader_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def set_tribe_manager_command(
+        self, 
+        interaction: Interaction,
+        name: str,
+        new_manager: Member,
+    ):
+        respond = interaction.response.send_message
+        
+        tribe = await get_tribe(interaction, name)
+        if not tribe: 
+            return 
+        elif tribe.leader != interaction.user.id:
+            return await respond(
+                'You are not the leader of this tribe',
+                ephemeral=True
+            )
+        elif new_manager == interaction.user:
+            return await respond(
+                "You cannot be the leader and the tribe's manager, appoint someone else",
+                ephemeral=True
+            )
+        members = TribeMemberCollection(await tribe.members)
+        if new_manager.id not in members.ids:
+            return await respond(
+                f'{new_manager.mention} is not a part of this tribe',
+                ephemeral=True
+            )
+        elif new_manager.id == tribe.manager:
+            return await respond(
+                f'{new_manager.mention} is already the manager of the tribe',
+                ephemeral=True
+            )
+        
+        tribe.manager = new_manager.id
+        await tribe.save()
+        
+        await respond(
+            f"Done! {new_manager.mention} is now the tribe's manager",
+            ephemeral=True
+        )
     
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))

@@ -3,12 +3,14 @@ from typing import Iterable
 
 from discord import Interaction, app_commands
 from discord.app_commands import Choice
+from tribalbot.src.controllers.tribes import get_all_member_tribes
 
 from tribalbot.src.orm.models import TribeCategory, Tribe
 from .cache import cached_model_autocomplete
 
 __all__ = [
     'autocomplete_categories',
+    'autocomplete_user_tribes',
     'autocomplete_guild_tribes',
     'autocomplete_manageable_tribes',
 ]
@@ -24,7 +26,11 @@ def _choices_from_categories(categories: Iterable[TribeCategory]) -> list[Choice
     return [
         Choice(name=cat.name, value=cat.name)
         for cat in categories
-    ] 
+    ]
+
+def _guild_n_user_filter(interaction: Interaction) -> tuple[int, int]:
+    """returns a tuple with the interaction guild and user ids"""
+    return interaction.guild.id, interaction.user.id
 
 @cached_model_autocomplete('categories', _choices_from_categories)
 async def autocomplete_categories(interaction: Interaction, current: str) -> list[Choice]:
@@ -33,7 +39,13 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
     guild = interaction.guild
     cats = await TribeCategory.filter(guild_config_id=guild.id)
     return cats
-    
+
+@cached_model_autocomplete('user-tribes', _choices_from_tribes, keyf=_guild_n_user_filter)
+async def autocomplete_user_tribes(interaction: Interaction, current: str) -> list[Choice]:
+    """Autocomplete for tribes of the interaction.user"""
+    user = interaction.user
+    tribes = await get_all_member_tribes(user)
+    return tribes
     
 @cached_model_autocomplete('tribes', _choices_from_tribes)
 async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> list[Choice]:
@@ -43,9 +55,7 @@ async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> l
     tribes = await Tribe.filter(guild_config_id=guild.id)
     return tribes
 
-def _guild_n_user_filter(interaction: Interaction) -> tuple[int, int]:
-    """returns a tuple with the interaction guild and user ids"""
-    return interaction.guild.id, interaction.user.id
+
 
 @cached_model_autocomplete(
     'manageable-tribes',
