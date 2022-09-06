@@ -40,7 +40,11 @@ async def autocomplete_categories(interaction: Interaction, current: str) -> lis
     cats = await TribeCategory.filter(guild_config_id=guild.id)
     return cats
 
-@cached_model_autocomplete('user-tribes', _choices_from_tribes, keyf=_guild_n_user_filter)
+@cached_model_autocomplete(
+    'user-tribes', 
+    _choices_from_tribes, 
+    keyf=_guild_n_user_filter
+)
 async def autocomplete_user_tribes(interaction: Interaction, current: str) -> list[Choice]:
     """Autocomplete for tribes of the interaction.user"""
     user = interaction.user
@@ -54,8 +58,6 @@ async def autocomplete_guild_tribes(interaction: Interaction, current: str) -> l
 
     tribes = await Tribe.filter(guild_config_id=guild.id)
     return tribes
-
-
 
 @cached_model_autocomplete(
     'manageable-tribes',
@@ -76,7 +78,7 @@ async def autocomplete_manageable_tribes(interaction: Interaction, current: str)
     
     return tribes
 
-@cached_model_autocomplete('leader-tribes', _guild_n_user_filter)
+@cached_model_autocomplete('leader-tribes', _choices_from_tribes, keyf=_guild_n_user_filter)
 async def autocomplete_leader_tribes(interaction: Interaction, current: str) -> list[Choice]:
     """autocomplete for tribes quere the user is a leader of the tribe"""
     tribes = set(await Tribe.filter(guild_config_id=interaction.guild.id, leader=interaction.user.id))

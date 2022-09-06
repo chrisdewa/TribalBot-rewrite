@@ -126,6 +126,18 @@ class TribeCog(Cog, description='Cog for tribe commands'):
                 ephemeral=True
             )
         
+        applications = {
+            application.applicant
+            for application in
+            await get_tribe_applications(tribe)
+        }
+        
+        if interaction.user.id in applications:
+            return await interaction.response.send_message(
+                'You already have an application to enter this tribe, wait for the tribe staff to accept or deny it',
+                ephemeral=True
+            )
+        
         application = await create_tribe_join_application(tribe, interaction) # create an application
         
         if not application: # it might be unsuccessful if the user already has a tribe in the given category
@@ -338,8 +350,9 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             )
         
     @app_commands.command(name='tribe-set-manager', description="Appoints the manager of the tribe. You must be a leader to use this.")
-    @app_commands.describe(name='the name of a tribe you are a leader of', member='The manager to appoint')
+    @app_commands.describe(name='the name of a tribe you are a leader of', new_manager='The manager to appoint')
     @app_commands.autocomplete(name=autocomplete_leader_tribes)
+    @app_commands.rename(new_manager='new-manager')
     @app_commands.guild_only()
     @guild_has_leaders_role()
     async def set_tribe_manager_command(

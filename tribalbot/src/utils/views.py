@@ -133,8 +133,25 @@ class ApplicationPaginatorView(BaseInteractionCheckMixin, DisableButtonsMixin, u
                 self.invalid_applications.append(application)
         
         return embeds or default
-        
+
+    def accepted_embed(self, itr: Interaction):
+        return Embed(
+                title='Tribe Join Application Accepted',
+                description=f'tribe: **{self.tribe.name}**\n'
+                            f'server: **{itr.guild}**',
+                color=Color.green()
+            )
     
+    def rejected_embed(self, itr: Interaction):
+        return Embed(
+                title='Tribe Join Application Rejected',
+                description=f'tribe: **{self.tribe.name}**\n'
+                            f'server: **{itr.guild}**',
+                color=Color.red()
+            )
+    
+    # TODO: auto disable and stop if there are no more applications
+        
     @property
     def index(self) -> int:
         return self.head % len(self.embeds)
@@ -165,6 +182,10 @@ class ApplicationPaginatorView(BaseInteractionCheckMixin, DisableButtonsMixin, u
         )
         
         await itr.response.edit_message(embed=embed, view=self)
+        try:
+            await applicant.send(embed=self.accepted_embed(itr))
+        except: # user has disabled dms TODO: improve error handling
+            pass 
     
     @ui.button(custom_id="deny", emoji='🚫', row=0)
     async def _deny(self, itr: Interaction, button: ui.Button):
@@ -179,6 +200,11 @@ class ApplicationPaginatorView(BaseInteractionCheckMixin, DisableButtonsMixin, u
             color=Color.red()
         )
         await itr.response.edit_message(embed=embed, view=self)
+        
+        try:
+            await applicant.send(embed=self.rejected_embed(itr))
+        except: # user has disabled dms TODO: improve error handling
+            pass 
         
 
     @ui.button(custom_id="Next", emoji="▶️", row=0)
