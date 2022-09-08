@@ -273,7 +273,7 @@ class TribePaginatorView(
         elif len(tribes) == 1:
             await interaction.response.send_message(embed=get_tribe_embed(tribes.pop(), interaction.guild))
         else:
-            await interaction.response.send_message('You are not part of any tribes yet', ephemeral=True)
+            await interaction.response.send_message('No tribes to show!', ephemeral=True)
             
         
     

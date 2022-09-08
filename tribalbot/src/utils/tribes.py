@@ -27,6 +27,8 @@ def get_tribe_embed(tribe: Tribe, guild: Guild) -> Embed:
     if img := tribe.banner.get('image'):
         embed.set_thumbnail(url=img)
     
+    embed.set_footer(text=f'id: {tribe.pk}')
+    
     return embed
 
 

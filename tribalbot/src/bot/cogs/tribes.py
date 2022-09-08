@@ -56,8 +56,10 @@ class TribeCog(Cog, description='Cog for tribe commands'):
     @app_commands.guild_only()
     async def tribe_list(self, interaction: Interaction):
         tribes = await get_all_guild_tribes(interaction.guild)
-        
-        await interaction.response.send_message(f'Server tribes: {tribes}')
+        for tribe in tribes:
+            await tribe.fetch_related('members')
+        view = TribePaginatorView(owner=interaction.user, tribes=tribes)
+        await view.send_menu(interaction, tribes)
     
     @app_commands.command(name='tribe-create', description='Creates a new tribe with you as the leader!')
     @app_commands.describe(name='The name of your tribe', 
@@ -395,6 +397,70 @@ class TribeCog(Cog, description='Cog for tribe commands'):
             f"Done! {new_manager.mention} is now the tribe's manager",
             ephemeral=True
         )
+
+    @app_commands.command(
+        name='tribe-transfer-leadership',
+        description="Transfer the leadership of the tribe to a target member"
+    )
+    @app_commands.describe(
+        name='The name of the tribe',
+        new_leader='The new leader of the tribe'
+    )
+    @app_commands.rename(new_leader='new-leader')
+    @app_commands.autocomplete(name=autocomplete_leader_tribes)
+    @app_commands.guild_only()
+    @guild_has_leaders_role()
+    async def tribe_transfer_leadership_cmd(
+        self,
+        interaction: Interaction,
+        name: str,
+        new_leader: Member,
+    ):
+        respond = interaction.response.send_message
+        
+        tribe = await get_tribe(interaction, name)
+        if not tribe: 
+            return 
+        elif tribe.leader != interaction.user.id:
+            return await respond(
+                'You are not the leader of this tribe',
+                ephemeral=True
+            )
+        elif new_leader == interaction.user:
+            return await respond(
+                "You cannot target yourself with this command",
+                ephemeral=True
+            )
+        members = TribeMemberCollection(await tribe.members)
+        if new_leader.id not in members.ids:
+            return await respond(
+                f'Error: {new_leader.mention} is not a part of the tribe',
+                ephemeral=True
+            )
+        await interaction.response.defer(ephemeral=True)
+        
+        tribe.leader = new_leader.id
+        await members.remove_member(new_leader.id)
+        
+        await tribe.save()
+        await TribeMember.create(tribe=tribe, member_id=interaction.user.id)
+        
+        try:
+            await new_leader.send(
+                embed=Embed(
+                    description=f'You have been a pointed as the leader of **{tribe.name}** '
+                                f'in the server **{interaction.guild}**',
+                    color=Color.gold()
+                )
+            )
+        except: # the new leader does not admint dm
+            pass
+        
+        await interaction.followup.send(
+            f"Done! you are no longer the leader of **{tribe.name}** and {new_leader.mention} is.",
+            ephemeral=True
+        )
+        
     
 async def setup(bot: TribalBot):
     await bot.add_cog(TribeCog(bot))
