@@ -21,7 +21,7 @@ class AdminTribeCog(Cog, description='Tribe Commands for Admins'):
     )
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True)
-    async def foo(
+    async def tribe_force_disband_cmd(
         self, 
         interaction: Interaction,
         name: str
@@ -57,6 +57,8 @@ class AdminTribeCog(Cog, description='Tribe Commands for Admins'):
             f'Done! the tribe "**{tribe.name}**" has been deleted.',
             ephemeral=True
         )
+        
+    
         
 
 async def setup(bot: TribalBot):
