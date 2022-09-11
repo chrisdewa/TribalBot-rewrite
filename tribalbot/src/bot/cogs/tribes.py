@@ -325,8 +325,21 @@ class TribeCog(Cog, description='Cog for tribe commands'):
         if not tribe: return 
         tribe_members = TribeMemberCollection(await tribe.members)
         
+        
         if member.id == tribe.leader:
-            await handle_leader_leave(tribe, members=tribe_members) # handle leader exiting tribe
+            result = await handle_leader_leave(tribe, members=tribe_members) # handle leader exiting tribe
+            if result:
+                new_leader = interaction.guild.get_member(tribe.leader)
+                try:
+                    await new_leader.send(embed=Embed(
+                        title='Tribe Notificaction',
+                        description=f'You have been appointed as the new leader of '
+                                    f'**{tribe.name}** in the server "**{interaction.guild.name}**" '
+                                    f'because the old leader exited the tribe without appointing a new leader.',
+                        color=Color.purple()
+                    ))
+                except: pass # new leader doesn't allow dms
+            
         elif member.id in tribe_members.ids:
             await tribe_members.remove_member(member.id)
             if member.id == tribe.manager:
