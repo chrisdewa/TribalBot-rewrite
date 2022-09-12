@@ -192,7 +192,12 @@ async def prune_tribe_members(tribe: Tribe, guild: Guild) -> set[int]:
     return prunned
     
 
-async def handle_leader_leave(tribe: Tribe, *, members: TribeMemberCollection | None = None, new_leader: int | None = None) -> bool:
+async def handle_leader_leave(
+    tribe: Tribe, 
+    *, 
+    members: TribeMemberCollection | None = None, 
+    new_leader: int | None = None
+) -> bool:
     """This handles a tribe leader that is leaving the tribe
     Works if the leader was forced to leave by an admin or 
     if the leader exits the tribe without disbanding or 
@@ -230,7 +235,7 @@ async def handle_leader_leave(tribe: Tribe, *, members: TribeMemberCollection | 
                 new_leader = random.choice(members.ids)
                 await members.remove_member(new_leader)
             
-        else: # there are no more users in this tribe, we delete it and return None
+        else: # there are no more users in this tribe, we delete it and return False
             await tribe.delete()
             return False
         
