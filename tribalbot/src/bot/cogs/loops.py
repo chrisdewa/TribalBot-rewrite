@@ -1,16 +1,18 @@
-from discord.ext.commands import Cog
+from discord import Member, RawMemberRemoveEvent
 from discord import app_commands, Interaction
+from discord.ext.commands import Cog
 from discord.ext import tasks
 from discord.ext.tasks import Loop
 
 from ..bot import TribalBot
+from ._utils import notify_new_tribe_leader
 from tribalbot.src.orm.models import Tribe, GuildConfig
 from tribalbot.src.utils.cache import clear_autocomplete_cache
 from tribalbot.src.utils.tribes import TribeMemberCollection
-from tribalbot.src.controllers.tribes import handle_leader_leave
+from tribalbot.src.controllers.tribes import get_all_member_tribes, handle_leader_leave
 
 
-class GeneralLoopCog(Cog, description='Tribe related Loops'):
+class MonitorCog(Cog, description='Tribe Monitors'):
     def __init__(self, bot) -> None:
         self.bot: TribalBot = bot
         self.__loops: list[Loop] = []
@@ -30,7 +32,7 @@ class GeneralLoopCog(Cog, description='Tribe related Loops'):
     
             
     @register_loop
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=5)
     async def tribe_monitor(self):
         await self.bot.wait_until_ready()
         async for guild_config in GuildConfig.all():
@@ -60,8 +62,32 @@ class GeneralLoopCog(Cog, description='Tribe related Loops'):
                         
                     if save_tribe: # only triggers if there's a leader and absent manager
                         await tribe.save()
+    
+    @Cog.listener('on_member_remove')
+    async def remobe_member_from_tribes(self, member: Member):
+        """
+        Activates when a member leaves a server. 
+        Scans tribes the member belonged to and clears it of them
+        """
+        tribes = await get_all_member_tribes(member)
+        for tribe in tribes:
+            members = TribeMemberCollection(await tribe.members)
+            save_tribe = False
+            if member.id == tribe.leader:
+                result = await handle_leader_leave(tribe, members=members)
+                if result and (new_leader := member.guild.get_member(tribe.leader)):
+                    # so far handle_leader_leave does not check if the new leader is actually in the server...
+                    await notify_new_tribe_leader(new_leader, tribe)
+            else:
+                await members.remove_member(member.id)
+                if member.id == tribe.manager:
+                    tribe.manager = None
+                    save_tribe = True
                     
+            if save_tribe:
+                await tribe.save()
+        
 
 async def setup(bot: TribalBot):
-    await bot.add_cog(GeneralLoopCog(bot))
+    await bot.add_cog(MonitorCog(bot))
         
